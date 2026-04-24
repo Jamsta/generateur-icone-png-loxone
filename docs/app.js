@@ -706,8 +706,15 @@ function initSliders() {
 }
 
 function updateSizeLabel() {
-  const n = [...$$('input[name="size"]:checked')].length;
+  const checked = [...$$('input[name="size"]:checked')];
+  const n = checked.length;
   $('sizes-label').textContent = n === 0 ? 'Aucune taille sélectionnée' : `${n} taille${n > 1 ? 's' : ''} sélectionnée${n > 1 ? 's' : ''}`;
+  // Mettre à jour le bouton de téléchargement avec la taille max sélectionnée
+  const sizes = checked.map(c => +c.value).sort((a, b) => a - b);
+  const maxSize = sizes.length ? sizes[sizes.length - 1] : null;
+  $('btn-export-single').innerHTML = maxSize
+    ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Télécharger (${maxSize}px)`
+    : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Télécharger`;
 }
 
 // ════════════════════════════════════════════
