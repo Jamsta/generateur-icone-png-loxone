@@ -697,12 +697,73 @@ function initSliders() {
   $('rotation').addEventListener('input', e => {
     state.rotation = +e.target.value; $('rotation-val').textContent = e.target.value + '°'; applyAndRender();
   });
-  $('stroke-width').addEventListener('input', e => {
-    state.strokeWidth = +e.target.value;
-    $('stroke-width-val').textContent = e.target.value === '0' ? 'Auto' : e.target.value + 'px';
-    applyAndRender();
-  });
   $$('input[name="size"]').forEach(cb => cb.addEventListener('change', updateSizeLabel));
+  initStrokeWidthDropdown();
+}
+
+// ── Dropdown Stroke Width (style Iconify) ──────────────────
+function initStrokeWidthDropdown() {
+  const trigger  = $('sw-trigger');
+  const panel    = $('sw-panel');
+  const slider   = $('stroke-width');
+  const numInput = $('sw-input');
+  const trigVal  = $('sw-trigger-val');
+  const arrow    = $('sw-trigger-arrow');
+
+  function setStrokeWidth(val) {
+    val = Math.max(0, Math.min(5, Math.round(val * 4) / 4)); // snap à 0.25
+    state.strokeWidth = val;
+    slider.value   = val;
+    numInput.value = val === 0 ? '' : val;
+    trigVal.textContent = val === 0 ? 'Auto' : val + ' px';
+    // Mise à jour du gradient fill du slider
+    const pct = (val / 5 * 100).toFixed(1) + '%';
+    slider.style.setProperty('--sw-pct', pct);
+    applyAndRender();
+  }
+
+  function openPanel() {
+    panel.hidden = false;
+    trigger.setAttribute('aria-expanded', 'true');
+    trigger.classList.add('open');
+    arrow.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>';
+  }
+
+  function closePanel() {
+    panel.hidden = true;
+    trigger.setAttribute('aria-expanded', 'false');
+    trigger.classList.remove('open');
+    arrow.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>';
+  }
+
+  trigger.addEventListener('click', e => {
+    e.stopPropagation();
+    panel.hidden ? openPanel() : closePanel();
+  });
+
+  // Fermer si clic en dehors
+  document.addEventListener('click', e => {
+    if (!$('sw-dropdown').contains(e.target)) closePanel();
+  });
+
+  // Slider → synchronise le champ number
+  slider.addEventListener('input', e => setStrokeWidth(+e.target.value));
+
+  // Champ number → synchronise le slider
+  numInput.addEventListener('input', e => {
+    const v = e.target.value === '' ? 0 : +e.target.value;
+    if (!isNaN(v)) setStrokeWidth(v);
+  });
+  numInput.addEventListener('blur', e => {
+    if (e.target.value === '' || isNaN(+e.target.value)) setStrokeWidth(0);
+  });
+  numInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') closePanel();
+    if (e.key === 'Escape') closePanel();
+  });
+
+  // Empêcher la fermeture au clic dans le panel
+  panel.addEventListener('click', e => e.stopPropagation());
 }
 
 function updateSizeLabel() {
@@ -730,16 +791,24 @@ function coloriseSvg(svgString, color, opacity) {
   if (!svgEl) return svgString;
 
   // ── Racine SVG ──
-  // Après normalizeSvgToBlack, la racine a fill="black" ou fill="none"
-  // On remplace tout ce qui n'est pas "none" par la couleur choisie
-  const rootFill = svgEl.getAttribute('fill');
+  const rootFill   = svgEl.getAttribute('fill');
+  const rootStroke = svgEl.getAttribute('stroke');
+
   if (rootFill && rootFill !== 'none') {
     svgEl.setAttribute('fill', color);
   } else if (!rootFill) {
-    // Pas d'attribut fill : on le pose pour que les paths héritent
     svgEl.setAttribute('fill', color);
   }
   // fill="none" sur la racine → on le laisse (cas SVG stroke-only)
+
+  // Colorer le stroke de la racine s'il existe (ex. Tabler, Iconoir)
+  if (rootStroke && rootStroke !== 'none') {
+    svgEl.setAttribute('stroke', color);
+    // Appliquer le stroke-width sur la racine aussi (il se propage aux enfants)
+    if (state.strokeWidth > 0) {
+      svgEl.setAttribute('stroke-width', state.strokeWidth);
+    }
+  }
 
   // ── Tous les éléments enfants ──
   svgEl.querySelectorAll('*').forEach(el => {
@@ -762,7 +831,13 @@ function coloriseSvg(svgString, color, opacity) {
     }
 
     // Épaisseur du trait (stroke-width) — si slider > 0
-    if (state.strokeWidth > 0 && (stroke !== null && stroke !== 'none')) {
+    // On l'applique si l'élément a un stroke explicite OU si la racine SVG a un stroke
+    // (cas Tabler/Iconoir : stroke hérité de <svg stroke="currentColor">)
+    const rootStroke = svgEl.getAttribute('stroke');
+    const hasStrokeContext = (stroke !== null && stroke !== 'none')
+      || (stroke === null && rootStroke !== null && rootStroke !== 'none');
+
+    if (state.strokeWidth > 0 && hasStrokeContext) {
       el.setAttribute('stroke-width', state.strokeWidth);
     }
 
@@ -770,8 +845,12 @@ function coloriseSvg(svgString, color, opacity) {
     if (style) {
       let newStyle = style.replace(/fill\s*:\s*(?!none\b)([^;]+)/gi, `fill:${color}`);
       newStyle = newStyle.replace(/stroke\s*:\s*(?!none\b)([^;]+)/gi, `stroke:${color}`);
-      if (state.strokeWidth > 0) {
-        newStyle = newStyle.replace(/stroke-width\s*:\s*[^;]+/gi, `stroke-width:${state.strokeWidth}`);
+      if (state.strokeWidth > 0 && hasStrokeContext) {
+        if (newStyle.match(/stroke-width\s*:/i)) {
+          newStyle = newStyle.replace(/stroke-width\s*:\s*[^;]+/gi, `stroke-width:${state.strokeWidth}`);
+        } else {
+          newStyle += `;stroke-width:${state.strokeWidth}`;
+        }
       }
       if (newStyle !== style) el.setAttribute('style', newStyle);
     }
