@@ -1,88 +1,259 @@
 /* ════════════════════════════════════════════
-   LOXONE ICON GENERATOR — APP.JS
+   LOXONE ICON GENERATOR — APP.JS v2
+   Specs Loxone : viewBox 0 0 24 24, fill=black,
+   fill-rule=evenodd, clip-rule=evenodd, no stroke
    ════════════════════════════════════════════ */
-
 'use strict';
+
+// ─── COULEURS LOXONE CONFIG EXACTES ─────────
+// Extraites de l'interface Loxone Config (sélecteur de couleur officiel)
+const LOXONE_COLORS = [
+  { hex: '#85FF66', name: 'Vert Loxone'    },
+  { hex: '#FF1B66', name: 'Rose vif'       },
+  { hex: '#FF6E33', name: 'Orange'         },
+  { hex: '#FFD93A', name: 'Jaune'          },
+  { hex: '#6EDFFF', name: 'Cyan'           },
+  { hex: '#FF5AD6', name: 'Magenta'        },
+  { hex: '#9B6CFF', name: 'Violet'         },
+  { hex: '#2D8BFF', name: 'Bleu'           },
+  { hex: '#888888', name: 'Gris'           },
+];
+
+// ─── PALETTE ÉTENDUE ─────────────────────────
+const EXT_COLORS = [
+  '#FFFFFF','#F5F5F5','#E0E0E0','#9E9E9E','#616161','#212121',
+  '#6DBE45','#1A7D37','#388E3C','#A5D6A7',
+  '#FF5722','#FF9800','#FFC107','#FFEB3B',
+  '#2196F3','#03A9F4','#00BCD4','#009688',
+  '#9C27B0','#673AB7','#3F51B5','#E91E63',
+  '#F44336','#795548','#607D8B','#455A64',
+];
 
 // ─── STATE ───────────────────────────────────
 const state = {
-  svgRaw: null,          // SVG string original
-  svgColored: null,      // SVG string après colorisation
-  colorMode: 'solid',    // 'solid' | 'gradient' | 'original'
+  svgRaw: null,
+  svgColored: null,
   iconColor: '#6DBE45',
   iconOpacity: 1,
   bgColor: '#FFFFFF',
   bgOpacity: 0,
-  gradColor1: '#6DBE45',
-  gradColor2: '#1A7D37',
-  gradDirection: 90,
-  padding: 10,
+  padding: 0,
   cornerRadius: 0,
   rotation: 0,
-  previewBg: '#F5F5F5',
+  previewBg: '#F0F2F5',
+  currentIconName: null,
   history: [],
 };
 
 // ─── DOM ─────────────────────────────────────
 const $ = id => document.getElementById(id);
-const $$ = sel => document.querySelectorAll(sel);
+const $$ = s => document.querySelectorAll(s);
 
-// ─── INIT ────────────────────────────────────
+// ════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
+  buildLoxonePalette();
+  buildExtPalette();
+  buildIconGrid();
   initTabs();
-  initColorTabs();
   initColorInputs();
   initSliders();
   initDropZone();
   initPreviewBg();
   initExport();
   initHistory();
-  updateSizeCount();
+  updateSizeLabel();
+});
+
+// ════════════════════════════════════════════
+// PALETTES
+// ════════════════════════════════════════════
+function buildLoxonePalette() {
+  const el = $('loxone-palette');
+  el.innerHTML = '';
+  LOXONE_COLORS.forEach((c, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'lox-color-btn' + (i === 0 ? ' active' : '');
+    btn.style.background = c.hex;
+    btn.title = c.name + ' — ' + c.hex;
+    btn.dataset.color = c.hex;
+    btn.addEventListener('click', () => {
+      $$('.lox-color-btn').forEach(b => b.classList.remove('active'));
+      $$('.ext-color-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      setIconColor(c.hex);
+    });
+    el.appendChild(btn);
+  });
+}
+
+function buildExtPalette() {
+  const el = $('ext-palette');
+  el.innerHTML = '';
+  EXT_COLORS.forEach(hex => {
+    const btn = document.createElement('button');
+    btn.className = 'ext-color-btn';
+    btn.style.background = hex;
+    btn.style.border = hex === '#FFFFFF' ? '2px solid #ddd' : '2px solid transparent';
+    btn.title = hex;
+    btn.dataset.color = hex;
+    btn.addEventListener('click', () => {
+      $$('.lox-color-btn').forEach(b => b.classList.remove('active'));
+      $$('.ext-color-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      setIconColor(hex);
+    });
+    el.appendChild(btn);
+  });
+}
+
+function setIconColor(hex) {
+  state.iconColor = hex;
+  $('icon-color').value = hex;
+  $('icon-color-hex').value = hex.toUpperCase();
+  applyAndRender();
+}
+
+// ════════════════════════════════════════════
+// BIBLIOTHÈQUE D'ICÔNES
+// ════════════════════════════════════════════
+function buildIconGrid(filter = '') {
+  const grid = $('icon-grid');
+  const countEl = $('search-count');
+  const term = filter.toLowerCase().trim();
+  const list = term
+    ? LOXONE_ICONS.filter(n => n.toLowerCase().includes(term))
+    : LOXONE_ICONS;
+
+  countEl.textContent = list.length;
+  grid.innerHTML = '';
+
+  // Rendu virtuel : on crée les éléments par batch
+  const frag = document.createDocumentFragment();
+  list.forEach(name => {
+    const item = document.createElement('div');
+    item.className = 'icon-item' + (state.currentIconName === name ? ' selected' : '');
+    item.dataset.name = name;
+    item.title = name;
+
+    // Utilise une img avec src vers icons/
+    const img = document.createElement('img');
+    img.src = `icons/${name}.svg`;
+    img.alt = name;
+    img.loading = 'lazy';
+    img.onerror = () => { img.style.opacity = '0.2'; };
+    // Coloriser via CSS filter (pour la preview dans la grille)
+    applyImgColor(img, state.iconColor);
+
+    const label = document.createElement('span');
+    label.className = 'icon-label';
+    label.textContent = name.replace(/-/g, ' ');
+
+    item.appendChild(img);
+    item.appendChild(label);
+
+    item.addEventListener('click', () => {
+      $$('.icon-item').forEach(i => i.classList.remove('selected'));
+      item.classList.add('selected');
+      state.currentIconName = name;
+      $('filename').value = name;
+      loadIconFromLibrary(name);
+    });
+
+    frag.appendChild(item);
+  });
+  grid.appendChild(frag);
+}
+
+// Applique une couleur à une img SVG via CSS filter
+function applyImgColor(img, hexColor) {
+  if (hexColor === '#000000' || hexColor === '#212121') {
+    img.style.filter = '';
+    return;
+  }
+  if (hexColor === '#FFFFFF' || hexColor === '#F5F5F5') {
+    img.style.filter = 'invert(1)';
+    return;
+  }
+  // Convertir hex → filtre CSS approximatif via hue-rotate
+  const filter = hexToFilter(hexColor);
+  img.style.filter = filter;
+}
+
+// Conversion hex → CSS filter pour coloriser les SVG noirs
+// Méthode : on applique la couleur cible via un filtre CSS précis
+function hexToFilter(hex) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  // Luminosité perçue
+  const lum = (0.299*r + 0.587*g + 0.114*b) / 255;
+  // HSL
+  const rn=r/255, gn=g/255, bn=b/255;
+  const max=Math.max(rn,gn,bn), min=Math.min(rn,gn,bn);
+  let h=0, s=0, l=(max+min)/2;
+  if(max!==min){
+    const d=max-min;
+    s=l>0.5?d/(2-max-min):d/(max+min);
+    switch(max){
+      case rn: h=((gn-bn)/d+(gn<bn?6:0))/6; break;
+      case gn: h=((bn-rn)/d+2)/6; break;
+      case bn: h=((rn-gn)/d+4)/6; break;
+    }
+  }
+  const hDeg=Math.round(h*360);
+  const sat=Math.round(s*100);
+  const bri=Math.round(lum*200);
+  return `brightness(0) saturate(100%) invert(1) sepia(1) saturate(5) hue-rotate(${hDeg-30}deg) brightness(${Math.max(0.3, lum*1.8).toFixed(2)})`;
+}
+
+async function loadIconFromLibrary(name) {
+  showLoading(true);
+  try {
+    const res = await fetch(`icons/${name}.svg`);
+    if (!res.ok) throw new Error('Icône introuvable');
+    const text = await res.text();
+    processSvg(text, name);
+  } catch(e) {
+    showLoading(false);
+    showToast('Erreur chargement icône', 'err');
+  }
+}
+
+// Recherche
+$('icon-search').addEventListener('input', e => {
+  buildIconGrid(e.target.value);
 });
 
 // ════════════════════════════════════════════
 // TABS
 // ════════════════════════════════════════════
 function initTabs() {
-  // Source tabs
-  $$('.tab').forEach(btn => {
+  $$('#source-tabs .tab').forEach(btn => {
     btn.addEventListener('click', () => {
-      $$('.tab').forEach(t => t.classList.remove('active'));
+      $$('#source-tabs .tab').forEach(t => t.classList.remove('active'));
       $$('.tab-content').forEach(c => c.classList.remove('active'));
       btn.classList.add('active');
       $('tab-' + btn.dataset.tab).classList.add('active');
     });
   });
 
-  // URL suggestions
-  $$('.pill').forEach(pill => {
-    pill.addEventListener('click', () => {
-      $('svg-url').value = pill.dataset.url;
-      loadFromUrl(pill.dataset.url);
-    });
-  });
-
-  // Load URL button
   $('btn-load-url').addEventListener('click', () => {
     const url = $('svg-url').value.trim();
-    if (!url) return showToast('Entrez une URL SVG', 'error');
+    if (!url) return showToast('Entrez une URL SVG', 'err');
     loadFromUrl(url);
   });
-  $('svg-url').addEventListener('keydown', e => {
-    if (e.key === 'Enter') $('btn-load-url').click();
-  });
+  $('svg-url').addEventListener('keydown', e => { if(e.key==='Enter') $('btn-load-url').click(); });
 
-  // Load code button
   $('btn-load-code').addEventListener('click', () => {
     const code = $('svg-code').value.trim();
-    if (!code) return showToast('Collez le code SVG', 'error');
+    if (!code) return showToast('Collez du code SVG', 'err');
     processSvg(code);
   });
 
-  // File input
   $('file-input').addEventListener('change', e => {
-    const file = e.target.files[0];
-    if (file) readFile(file);
+    if (e.target.files[0]) readFile(e.target.files[0]);
   });
 }
 
@@ -92,53 +263,50 @@ function initTabs() {
 async function loadFromUrl(url) {
   showLoading(true);
   try {
-    // Essai direct
-    let res = await fetch(url);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const text = await res.text();
-    if (!text.includes('<svg') && !text.includes('<SVG')) throw new Error('Le fichier ne semble pas être un SVG valide');
-    processSvg(text);
-  } catch (err) {
-    // Essai via proxy CORS public
+    let text;
     try {
+      const r = await fetch(url);
+      if (!r.ok) throw new Error();
+      text = await r.text();
+    } catch {
       const proxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-      const res2 = await fetch(proxy);
-      const text2 = await res2.text();
-      if (!text2.includes('<svg') && !text2.includes('<SVG')) throw new Error('Format SVG invalide');
-      processSvg(text2);
-    } catch (err2) {
-      showLoading(false);
-      showToast('Impossible de charger le SVG : ' + err.message, 'error');
+      const r2 = await fetch(proxy);
+      text = await r2.text();
     }
+    if (!text.includes('<svg') && !text.includes('<SVG')) throw new Error('Pas un SVG');
+    processSvg(text);
+  } catch(e) {
+    showLoading(false);
+    showToast('Impossible de charger le SVG', 'err');
   }
 }
 
 function readFile(file) {
-  if (!file.name.endsWith('.svg') && file.type !== 'image/svg+xml') {
-    return showToast('Veuillez sélectionner un fichier SVG', 'error');
-  }
+  if (!file.name.endsWith('.svg') && file.type !== 'image/svg+xml')
+    return showToast('Fichier SVG requis', 'err');
   const reader = new FileReader();
   reader.onload = e => processSvg(e.target.result);
-  reader.onerror = () => showToast('Erreur de lecture du fichier', 'error');
   reader.readAsText(file);
 }
 
-function processSvg(svgString) {
-  showLoading(false);
-  // Nettoyage basique
-  svgString = svgString.trim();
-  // Supprimer éventuel DOCTYPE / XML header
-  svgString = svgString.replace(/<\?xml[^?]*\?>/gi, '').trim();
-  svgString = svgString.replace(/<!DOCTYPE[^>]*>/gi, '').trim();
-
-  // Vérifier que c'est un SVG
-  if (!svgString.match(/<svg[\s>]/i)) {
-    return showToast('Format SVG invalide', 'error');
+function processSvg(raw, name = null) {
+  let svg = raw.trim()
+    .replace(/<\?xml[^?]*\?>/gi, '')
+    .replace(/<!DOCTYPE[^>]*>/gi, '')
+    .trim();
+  if (!svg.match(/<svg[\s>]/i)) {
+    showLoading(false);
+    return showToast('SVG invalide', 'err');
   }
-
-  state.svgRaw = svgString;
-  applyColors();
-  showToast('SVG chargé avec succès !', 'success');
+  state.svgRaw = svg;
+  if (name) {
+    state.currentIconName = name;
+    $('current-icon-name').textContent = name;
+    $('current-icon-name').hidden = false;
+    $('filename').value = name;
+  }
+  applyAndRender();
+  showToast(name ? `Icône "${name}" chargée` : 'SVG chargé !', 'ok');
 }
 
 // ════════════════════════════════════════════
@@ -146,35 +314,11 @@ function processSvg(svgString) {
 // ════════════════════════════════════════════
 function initDropZone() {
   const zone = $('drop-zone');
-
-  zone.addEventListener('dragover', e => {
-    e.preventDefault();
-    zone.classList.add('drag-over');
-  });
-
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
   zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
-
   zone.addEventListener('drop', e => {
-    e.preventDefault();
-    zone.classList.remove('drag-over');
-    const file = e.dataTransfer.files[0];
-    if (file) readFile(file);
-  });
-}
-
-// ════════════════════════════════════════════
-// COLOR TABS
-// ════════════════════════════════════════════
-function initColorTabs() {
-  $$('.color-tab').forEach(btn => {
-    btn.addEventListener('click', () => {
-      $$('.color-tab').forEach(t => t.classList.remove('active'));
-      $$('.color-panel').forEach(p => p.classList.remove('active'));
-      btn.classList.add('active');
-      state.colorMode = btn.dataset.mode;
-      $('panel-' + btn.dataset.mode).classList.add('active');
-      applyColors();
-    });
+    e.preventDefault(); zone.classList.remove('drag-over');
+    if (e.dataTransfer.files[0]) readFile(e.dataTransfer.files[0]);
   });
 }
 
@@ -182,83 +326,46 @@ function initColorTabs() {
 // COLOR INPUTS
 // ════════════════════════════════════════════
 function initColorInputs() {
-  // ── Icône color ──
-  syncColorPair($('icon-color'), $('icon-color-hex'), val => {
-    state.iconColor = val;
-    applyColors();
-  });
+  syncColor($('icon-color'), $('icon-color-hex'), val => { state.iconColor = val; applyAndRender(); });
+  syncColor($('bg-color'), $('bg-color-hex'), val => { state.bgColor = val; applyAndRender(); });
 
-  // ── Icône opacité ──
   $('icon-opacity').addEventListener('input', e => {
     state.iconOpacity = e.target.value / 100;
     $('icon-opacity-val').textContent = e.target.value + '%';
-    applyColors();
+    applyAndRender();
   });
-
-  // ── Fond color ──
-  syncColorPair($('bg-color'), $('bg-color-hex'), val => {
-    state.bgColor = val;
-    applyColors();
-  });
-
-  // ── Fond opacité ──
   $('bg-opacity').addEventListener('input', e => {
     state.bgOpacity = e.target.value / 100;
     $('bg-opacity-val').textContent = e.target.value + '%';
-    applyColors();
-  });
-
-  // ── Gradient ──
-  syncColorPair($('grad-color1'), $('grad-color1-hex'), val => {
-    state.gradColor1 = val;
-    applyColors();
-  });
-  syncColorPair($('grad-color2'), $('grad-color2-hex'), val => {
-    state.gradColor2 = val;
-    applyColors();
-  });
-  $('grad-direction').addEventListener('change', e => {
-    state.gradDirection = parseInt(e.target.value);
-    applyColors();
-  });
-
-  // ── Presets ──
-  $$('.preset-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const color = btn.dataset.color;
-      $('icon-color').value = color;
-      $('icon-color-hex').value = color;
-      state.iconColor = color;
-      $$('.preset-btn').forEach(b => b.classList.remove('active-preset'));
-      btn.classList.add('active-preset');
-      applyColors();
-    });
+    applyAndRender();
   });
 }
 
-function syncColorPair(colorEl, hexEl, onChange) {
+function syncColor(colorEl, hexEl, cb) {
   colorEl.addEventListener('input', () => {
     hexEl.value = colorEl.value.toUpperCase();
-    onChange(colorEl.value);
+    cb(colorEl.value);
+    syncPaletteActive(colorEl.value);
   });
   hexEl.addEventListener('input', () => {
-    const val = hexEl.value;
-    if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
-      colorEl.value = val;
-      onChange(val);
-    }
+    const v = hexEl.value;
+    if (/^#[0-9A-Fa-f]{6}$/.test(v)) { colorEl.value = v; cb(v); syncPaletteActive(v); }
   });
   hexEl.addEventListener('blur', () => {
-    let val = hexEl.value;
-    if (!val.startsWith('#')) val = '#' + val;
-    if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
-      hexEl.value = val.toUpperCase();
-      colorEl.value = val;
-      onChange(val);
-    } else {
-      hexEl.value = colorEl.value.toUpperCase();
-    }
+    let v = hexEl.value;
+    if (!v.startsWith('#')) v = '#' + v;
+    if (/^#[0-9A-Fa-f]{6}$/.test(v)) {
+      hexEl.value = v.toUpperCase(); colorEl.value = v; cb(v); syncPaletteActive(v);
+    } else { hexEl.value = colorEl.value.toUpperCase(); }
   });
+}
+
+function syncPaletteActive(hex) {
+  const norm = hex.toUpperCase();
+  $$('.lox-color-btn').forEach(b => b.classList.toggle('active', b.dataset.color.toUpperCase() === norm));
+  $$('.ext-color-btn').forEach(b => b.classList.toggle('active', b.dataset.color.toUpperCase() === norm));
+  // Mettre à jour les imgs de la grille
+  $$('.icon-item img').forEach(img => applyImgColor(img, hex));
 }
 
 // ════════════════════════════════════════════
@@ -266,163 +373,104 @@ function syncColorPair(colorEl, hexEl, onChange) {
 // ════════════════════════════════════════════
 function initSliders() {
   $('padding').addEventListener('input', e => {
-    state.padding = parseInt(e.target.value);
-    $('padding-val').textContent = e.target.value + '%';
-    applyColors();
+    state.padding = +e.target.value; $('padding-val').textContent = e.target.value + '%'; applyAndRender();
   });
-
   $('corner-radius').addEventListener('input', e => {
-    state.cornerRadius = parseInt(e.target.value);
-    $('corner-val').textContent = e.target.value + '%';
-    applyColors();
+    state.cornerRadius = +e.target.value; $('corner-val').textContent = e.target.value + '%'; applyAndRender();
   });
-
   $('rotation').addEventListener('input', e => {
-    state.rotation = parseInt(e.target.value);
-    $('rotation-val').textContent = e.target.value + '°';
-    applyColors();
+    state.rotation = +e.target.value; $('rotation-val').textContent = e.target.value + '°'; applyAndRender();
   });
-
-  // Size checkboxes
-  $$('input[name="size"]').forEach(cb => {
-    cb.addEventListener('change', updateSizeCount);
-  });
+  $$('input[name="size"]').forEach(cb => cb.addEventListener('change', updateSizeLabel));
 }
 
-function updateSizeCount() {
-  const checked = [...$$('input[name="size"]:checked')].length;
-  $('selected-sizes-label').textContent = `${checked} taille(s) sélectionnée(s)`;
+function updateSizeLabel() {
+  const n = [...$$('input[name="size"]:checked')].length;
+  $('sizes-label').textContent = `${n} taille(s) sélectionnée(s)`;
 }
 
 // ════════════════════════════════════════════
-// COLOR APPLICATION
+// SVG COLORISATION (fidèle aux specs Loxone)
 // ════════════════════════════════════════════
-function applyColors() {
-  if (!state.svgRaw) return;
-
-  let svg = state.svgRaw;
-
-  if (state.colorMode === 'solid') {
-    svg = colorSvgSolid(svg, state.iconColor, state.iconOpacity);
-  } else if (state.colorMode === 'gradient') {
-    svg = colorSvgGradient(svg, state.gradColor1, state.gradColor2, state.gradDirection);
-  } else {
-    // original — on garde tel quel
-    svg = state.svgRaw;
-  }
-
-  state.svgColored = svg;
-  renderPreview();
-}
-
-function colorSvgSolid(svg, color, opacity) {
+function coloriseSvg(svgString, color, opacity) {
   const parser = new DOMParser();
-  const doc = parser.parseFromString(svg, 'image/svg+xml');
+  const doc = parser.parseFromString(svgString, 'image/svg+xml');
   const svgEl = doc.querySelector('svg');
-  if (!svgEl) return svg;
+  if (!svgEl) return svgString;
 
-  // Appliquer la couleur sur tous les éléments dessinables
-  const elements = svgEl.querySelectorAll('path, rect, circle, ellipse, polygon, polyline, line, text, use');
-  elements.forEach(el => {
-    // Ne pas coloriser les éléments avec fill="none"
+  // Supprimer couleurs existantes inline pour repartir propre
+  const allEls = svgEl.querySelectorAll('*');
+  allEls.forEach(el => {
     const fill = el.getAttribute('fill');
-    const stroke = el.getAttribute('stroke');
-    const style = el.getAttribute('style') || '';
-
-    if (fill !== 'none' && !style.includes('fill:none')) {
+    const style = (el.getAttribute('style') || '');
+    // On colorise uniquement les éléments qui ne sont pas fill=none
+    if (fill && fill !== 'none') {
       el.setAttribute('fill', color);
-      el.removeAttribute('fill-opacity');
     }
-    if (stroke && stroke !== 'none') {
-      el.setAttribute('stroke', color);
+    if (!fill && el.tagName !== 'defs' && el.tagName !== 'clipPath') {
+      // Hérite : pas besoin de toucher
     }
-  });
-
-  // Si aucun attribut fill n'est sur les enfants, appliquer sur le SVG lui-même
-  if (elements.length === 0) {
-    svgEl.setAttribute('fill', color);
-  }
-
-  // Opacité globale
-  if (opacity < 1) {
-    svgEl.setAttribute('opacity', opacity);
-  } else {
-    svgEl.removeAttribute('opacity');
-  }
-
-  return new XMLSerializer().serializeToString(doc);
-}
-
-function colorSvgGradient(svg, color1, color2, angle) {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(svg, 'image/svg+xml');
-  const svgEl = doc.querySelector('svg');
-  if (!svgEl) return svg;
-
-  // Calculer x1/y1/x2/y2 depuis l'angle
-  const rad = (angle * Math.PI) / 180;
-  const x2 = 50 + 50 * Math.cos(rad - Math.PI / 2);
-  const y2 = 50 + 50 * Math.sin(rad - Math.PI / 2);
-  const x1 = 100 - x2;
-  const y1 = 100 - y2;
-
-  // Créer le defs + linearGradient
-  let defs = svgEl.querySelector('defs');
-  if (!defs) {
-    defs = doc.createElementNS('http://www.w3.org/2000/svg', 'defs');
-    svgEl.insertBefore(defs, svgEl.firstChild);
-  }
-
-  // Supprimer ancien gradient loxgen
-  const oldGrad = defs.querySelector('#loxgen-grad');
-  if (oldGrad) defs.removeChild(oldGrad);
-
-  const grad = doc.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
-  grad.setAttribute('id', 'loxgen-grad');
-  grad.setAttribute('x1', x1 + '%');
-  grad.setAttribute('y1', y1 + '%');
-  grad.setAttribute('x2', x2 + '%');
-  grad.setAttribute('y2', y2 + '%');
-
-  const stop1 = doc.createElementNS('http://www.w3.org/2000/svg', 'stop');
-  stop1.setAttribute('offset', '0%');
-  stop1.setAttribute('stop-color', color1);
-
-  const stop2 = doc.createElementNS('http://www.w3.org/2000/svg', 'stop');
-  stop2.setAttribute('offset', '100%');
-  stop2.setAttribute('stop-color', color2);
-
-  grad.appendChild(stop1);
-  grad.appendChild(stop2);
-  defs.appendChild(grad);
-
-  // Appliquer
-  const elements = svgEl.querySelectorAll('path, rect, circle, ellipse, polygon, polyline, line, text, use');
-  elements.forEach(el => {
-    const fill = el.getAttribute('fill');
-    const style = el.getAttribute('style') || '';
-    if (fill !== 'none' && !style.includes('fill:none')) {
-      el.setAttribute('fill', 'url(#loxgen-grad)');
+    // Si fill est dans le style inline
+    if (style.includes('fill:') && !style.includes('fill:none')) {
+      el.setAttribute('style', style.replace(/fill:[^;]*/g, `fill:${color}`));
     }
   });
 
-  if (elements.length === 0) {
-    svgEl.setAttribute('fill', 'url(#loxgen-grad)');
+  // Le SVG lui-même
+  svgEl.setAttribute('fill', color);
+
+  // Opacité
+  if (opacity < 1) svgEl.setAttribute('opacity', opacity.toFixed(2));
+  else svgEl.removeAttribute('opacity');
+
+  // S'assurer que viewBox est présent (standard Loxone : 0 0 24 24)
+  if (!svgEl.getAttribute('viewBox')) {
+    svgEl.setAttribute('viewBox', '0 0 24 24');
   }
 
   return new XMLSerializer().serializeToString(doc);
 }
 
 // ════════════════════════════════════════════
-// RENDER — CANVAS
+// APPLY + RENDER
 // ════════════════════════════════════════════
+function applyAndRender() {
+  if (!state.svgRaw) return;
+  state.svgColored = coloriseSvg(state.svgRaw, state.iconColor, state.iconOpacity);
+  renderAll();
+}
+
+async function renderAll() {
+  if (!state.svgRaw) return;
+  try {
+    // Preview principale 256px
+    await renderToCanvas($('preview-canvas'), 256);
+    $('preview-empty').hidden = true;
+    $('preview-canvas').hidden = false;
+    $('mini-strip').hidden = false;
+
+    // Mini previews
+    await renderToCanvas($('mini-48'), 48);
+    await renderToCanvas($('mini-64'), 64);
+    await renderToCanvas($('mini-128'), 128);
+
+    showLoading(false);
+  } catch(e) {
+    showLoading(false);
+    console.error(e);
+  }
+}
+
+// ─── MOTEUR DE RENDU CANVAS ──────────────────
+// Conforme aux specs Loxone : carré, fond transparent par défaut,
+// fill-rule=evenodd, viewBox 0 0 24 24
 async function renderToCanvas(canvas, size) {
   const ctx = canvas.getContext('2d');
   canvas.width = size;
   canvas.height = size;
   ctx.clearRect(0, 0, size, size);
 
-  // ── Fond ──
+  // Fond
   if (state.bgOpacity > 0) {
     ctx.save();
     ctx.globalAlpha = state.bgOpacity;
@@ -438,17 +486,17 @@ async function renderToCanvas(canvas, size) {
     ctx.restore();
   }
 
-  // ── SVG ──
+  // SVG colorisé
   const svg = state.svgColored || state.svgRaw;
   if (!svg) return;
 
-  const pad = (state.padding / 100) * size;
+  const pad = Math.round((state.padding / 100) * size);
   const drawSize = size - 2 * pad;
 
-  // Injecter width/height dans le SVG pour l'image
-  let svgForRender = ensureSvgDimensions(svg, drawSize, drawSize);
+  // Injecter les dimensions dans le SVG
+  const svgReady = prepareSvgForCanvas(svg, drawSize);
 
-  const blob = new Blob([svgForRender], { type: 'image/svg+xml' });
+  const blob = new Blob([svgReady], { type: 'image/svg+xml;charset=utf-8' });
   const url = URL.createObjectURL(blob);
 
   await new Promise((resolve, reject) => {
@@ -456,36 +504,37 @@ async function renderToCanvas(canvas, size) {
     img.onload = () => {
       ctx.save();
       ctx.translate(size / 2, size / 2);
-      ctx.rotate((state.rotation * Math.PI) / 180);
+      if (state.rotation !== 0) ctx.rotate((state.rotation * Math.PI) / 180);
       ctx.drawImage(img, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
       ctx.restore();
       URL.revokeObjectURL(url);
       resolve();
     };
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error('Erreur de rendu SVG'));
-    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Rendu SVG échoué')); };
     img.src = url;
   });
 }
 
-function ensureSvgDimensions(svg, w, h) {
+function prepareSvgForCanvas(svg, size) {
   const parser = new DOMParser();
   const doc = parser.parseFromString(svg, 'image/svg+xml');
   const svgEl = doc.querySelector('svg');
   if (!svgEl) return svg;
 
-  svgEl.setAttribute('width', w);
-  svgEl.setAttribute('height', h);
+  // Forcer les dimensions
+  svgEl.setAttribute('width', size);
+  svgEl.setAttribute('height', size);
 
-  // Si pas de viewBox, en créer un depuis width/height originaux
+  // Assurer viewBox (standard Loxone 24x24)
   if (!svgEl.getAttribute('viewBox')) {
-    const ow = svgEl.getAttribute('width') || '24';
-    const oh = svgEl.getAttribute('height') || '24';
-    const numW = parseFloat(ow) || 24;
-    const numH = parseFloat(oh) || 24;
-    svgEl.setAttribute('viewBox', `0 0 ${numW} ${numH}`);
+    const w = parseFloat(svgEl.getAttribute('width')) || 24;
+    const h = parseFloat(svgEl.getAttribute('height')) || 24;
+    svgEl.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  }
+
+  // Ajouter xmlns si manquant
+  if (!svgEl.getAttribute('xmlns')) {
+    svgEl.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
   }
 
   return new XMLSerializer().serializeToString(doc);
@@ -506,38 +555,6 @@ function roundRect(ctx, x, y, w, h, r) {
 }
 
 // ════════════════════════════════════════════
-// PREVIEW
-// ════════════════════════════════════════════
-async function renderPreview() {
-  if (!state.svgRaw) return;
-
-  const previewCanvas = $('preview-canvas');
-  const previewWrapper = $('preview-wrapper');
-  const previewEmpty = $('preview-empty');
-
-  try {
-    await renderToCanvas(previewCanvas, 256);
-
-    previewEmpty.hidden = true;
-    previewCanvas.hidden = false;
-    $('preview-sizes').hidden = false;
-    $('preview-info').hidden = false;
-
-    // Mini previews
-    await renderToCanvas($('mini-48'), 48);
-    await renderToCanvas($('mini-64'), 64);
-    await renderToCanvas($('mini-128'), 128);
-
-    // Info
-    $('info-size').textContent = '256×256';
-
-  } catch (err) {
-    console.error('Erreur preview:', err);
-    showToast('Erreur de prévisualisation', 'error');
-  }
-}
-
-// ════════════════════════════════════════════
 // PREVIEW BACKGROUND
 // ════════════════════════════════════════════
 function initPreviewBg() {
@@ -545,8 +562,14 @@ function initPreviewBg() {
     btn.addEventListener('click', () => {
       $$('.bg-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      state.previewBg = btn.dataset.bg;
-      $('preview-wrapper').style.background = btn.dataset.bg;
+      const stage = $('preview-stage');
+      if (btn.dataset.bg === 'checker') {
+        stage.style.background = '';
+        stage.classList.add('checker-bg');
+      } else {
+        stage.classList.remove('checker-bg');
+        stage.style.background = btn.dataset.bg;
+      }
     });
   });
 }
@@ -556,162 +579,124 @@ function initPreviewBg() {
 // ════════════════════════════════════════════
 function initExport() {
   $('btn-export-single').addEventListener('click', exportSingle);
-  $('btn-export-all').addEventListener('click', exportAll);
+  $('btn-export-all').addEventListener('click', exportZip);
 }
 
 async function exportSingle() {
-  if (!state.svgRaw) return showToast('Chargez un SVG d\'abord', 'error');
-
-  // Taille principale sélectionnée (la plus grande cochée)
+  if (!state.svgRaw) return showToast('Chargez une icône d\'abord', 'err');
   const sizes = getSelectedSizes();
-  if (!sizes.length) return showToast('Sélectionnez au moins une taille', 'error');
+  if (!sizes.length) return showToast('Sélectionnez au moins une taille', 'err');
+  // Télécharger la taille la plus grande sélectionnée
   const size = sizes[sizes.length - 1];
-
   const canvas = $('render-canvas');
   await renderToCanvas(canvas, size);
-
-  const filename = buildFilename(size);
-  downloadCanvas(canvas, filename);
-  addToHistory(canvas, filename, size);
-  showToast(`${filename}.png téléchargé !`, 'success');
+  const fname = buildFilename(size);
+  dlCanvas(canvas, fname);
+  addToHistory(canvas, fname, size);
+  showToast(`${fname}.png téléchargé !`, 'ok');
 }
 
-async function exportAll() {
-  if (!state.svgRaw) return showToast('Chargez un SVG d\'abord', 'error');
-
+async function exportZip() {
+  if (!state.svgRaw) return showToast('Chargez une icône d\'abord', 'err');
+  if (typeof JSZip === 'undefined') return showToast('JSZip non disponible', 'err');
   const sizes = getSelectedSizes();
-  if (!sizes.length) return showToast('Sélectionnez au moins une taille', 'error');
+  if (!sizes.length) return showToast('Sélectionnez au moins une taille', 'err');
 
-  showToast('Génération du ZIP...', 'info');
-
-  if (typeof JSZip === 'undefined') {
-    return showToast('Erreur: JSZip non chargé', 'error');
-  }
-
+  showToast('Génération ZIP…', 'info');
   const zip = new JSZip();
   const canvas = $('render-canvas');
-  const loxoneNames = $('opt-loxone-names').checked;
-  const includeSvg = $('opt-include-svg').checked;
+  const useLoxNames = $('opt-lox-names').checked;
+  const inclSvg = $('opt-svg').checked;
 
   for (const size of sizes) {
     await renderToCanvas(canvas, size);
-    const blob = await canvasToBlob(canvas);
-    const name = loxoneNames
-      ? buildLoxoneFilename($('filename').value || 'icon', size)
-      : buildFilename(size);
+    const blob = await canvasBlob(canvas);
+    const name = useLoxNames ? loxFilename(size) : buildFilename(size);
     zip.file(name + '.png', blob);
   }
 
-  if (includeSvg && state.svgColored) {
-    const svgBlob = new Blob([state.svgColored], { type: 'image/svg+xml' });
-    zip.file(($('filename').value || 'icon') + '.svg', svgBlob);
+  if (inclSvg && state.svgColored) {
+    zip.file(baseName() + '.svg', new Blob([state.svgColored], { type: 'image/svg+xml' }));
   }
 
   const zipBlob = await zip.generateAsync({ type: 'blob' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(zipBlob);
-  a.download = ($('filename').value || 'loxone-icons') + '.zip';
+  a.download = baseName() + '_loxone.zip';
   a.click();
   URL.revokeObjectURL(a.href);
 
-  showToast(`ZIP avec ${sizes.length} taille(s) téléchargé !`, 'success');
-
-  // Ajouter la dernière taille dans l'historique
+  // Historique avec la dernière taille
   await renderToCanvas(canvas, sizes[sizes.length - 1]);
   addToHistory(canvas, buildFilename(sizes[sizes.length - 1]), sizes[sizes.length - 1]);
+
+  showToast(`ZIP (${sizes.length} taille${sizes.length > 1 ? 's' : ''}) téléchargé !`, 'ok');
 }
 
 function getSelectedSizes() {
-  return [...$$('input[name="size"]:checked')]
-    .map(cb => parseInt(cb.value))
-    .sort((a, b) => a - b);
+  return [...$$('input[name="size"]:checked')].map(c => +c.value).sort((a, b) => a - b);
 }
-
-function buildFilename(size) {
-  const base = $('filename').value.trim() || 'loxone-icon';
-  return `${base}_${size}x${size}`;
-}
-
-function buildLoxoneFilename(base, size) {
-  // Format Loxone: nom_WxH (ex: home_48x48)
-  const clean = base.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
-  return `${clean}_${size}x${size}`;
-}
-
-function downloadCanvas(canvas, filename) {
-  canvas.toBlob(blob => {
+function baseName() { return ($('filename').value.trim() || 'icon').replace(/[^a-z0-9_\-]/gi, '_'); }
+function buildFilename(size) { return `${baseName()}_${size}x${size}`; }
+function loxFilename(size) { return `${baseName().toLowerCase()}_${size}x${size}`; }
+function dlCanvas(canvas, name) {
+  canvas.toBlob(b => {
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = filename + '.png';
+    a.href = URL.createObjectURL(b);
+    a.download = name + '.png';
     a.click();
     URL.revokeObjectURL(a.href);
   }, 'image/png');
 }
-
-function canvasToBlob(canvas) {
-  return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+function canvasBlob(canvas) {
+  return new Promise(res => canvas.toBlob(res, 'image/png'));
 }
 
 // ════════════════════════════════════════════
 // HISTORY
 // ════════════════════════════════════════════
 function initHistory() {
-  $('btn-clear-history').addEventListener('click', () => {
+  $('btn-clear-hist').addEventListener('click', () => {
     state.history = [];
     renderHistory();
   });
 }
 
 function addToHistory(canvas, name, size) {
-  const thumb = canvas.toDataURL('image/png');
-  const ts = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-
-  state.history.unshift({ thumb, name, size, ts, dataUrl: thumb });
-
-  // Max 12 items
-  if (state.history.length > 12) state.history.pop();
-
+  state.history.unshift({ dataUrl: canvas.toDataURL('image/png'), name, size });
+  if (state.history.length > 24) state.history.pop();
   renderHistory();
 }
 
 function renderHistory() {
-  const list = $('history-list');
-  const empty = $('history-empty');
-  const countBadge = $('history-count');
-  const clearBtn = $('btn-clear-history');
+  const grid = $('history-grid');
+  const empty = $('hist-empty');
+  const badge = $('hist-count');
+  const clearBtn = $('btn-clear-hist');
 
-  countBadge.textContent = state.history.length;
+  badge.textContent = state.history.length;
+  clearBtn.hidden = state.history.length === 0;
 
   if (!state.history.length) {
-    if (empty) empty.hidden = false;
-    clearBtn.hidden = true;
-    list.innerHTML = '<p class="hint" id="history-empty">Aucune icône générée pour le moment.</p>';
+    grid.innerHTML = '<p class="hint" id="hist-empty">Aucune icône générée.</p>';
     return;
   }
 
-  clearBtn.hidden = false;
-
-  list.innerHTML = state.history.map((item, i) => `
-    <div class="history-item" data-index="${i}">
-      <img class="history-thumb" src="${item.thumb}" alt="${item.name}" />
-      <div class="history-info">
-        <div class="history-name">${item.name}.png</div>
-        <div class="history-meta">${item.size}×${item.size} px · ${item.ts}</div>
-      </div>
-      <button class="history-dl" title="Re-télécharger" data-index="${i}">⬇</button>
+  grid.innerHTML = state.history.map((item, i) => `
+    <div class="hist-item" title="${item.name} — ${item.size}px" data-i="${i}">
+      <img src="${item.dataUrl}" alt="${item.name}" />
+      <div class="hist-dl" data-i="${i}">⬇</div>
     </div>
   `).join('');
 
-  // Listeners
-  $$('.history-dl').forEach(btn => {
+  $$('.hist-dl').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();
-      const item = state.history[parseInt(btn.dataset.index)];
+      const item = state.history[+btn.dataset.i];
       const a = document.createElement('a');
       a.href = item.dataUrl;
       a.download = item.name + '.png';
       a.click();
-      showToast(`${item.name}.png re-téléchargé`, 'success');
     });
   });
 }
@@ -720,17 +705,17 @@ function renderHistory() {
 // LOADING
 // ════════════════════════════════════════════
 function showLoading(show) {
-  const wrapper = $('preview-wrapper');
-  let overlay = wrapper.querySelector('.loading-overlay');
+  const stage = $('preview-stage');
+  let ov = stage.querySelector('.spinner-overlay');
   if (show) {
-    if (!overlay) {
-      overlay = document.createElement('div');
-      overlay.className = 'loading-overlay';
-      overlay.innerHTML = '<div class="spinner"></div>';
-      wrapper.appendChild(overlay);
+    if (!ov) {
+      ov = document.createElement('div');
+      ov.className = 'spinner-overlay';
+      ov.innerHTML = '<div class="spinner"></div>';
+      stage.appendChild(ov);
     }
   } else {
-    if (overlay) overlay.remove();
+    if (ov) ov.remove();
   }
 }
 
@@ -738,12 +723,10 @@ function showLoading(show) {
 // TOAST
 // ════════════════════════════════════════════
 let toastTimer;
-function showToast(msg, type = 'success') {
+function showToast(msg, type = 'ok') {
   const el = $('toast');
   el.textContent = msg;
-  el.className = 'toast show ' + type;
+  el.className = `toast show ${type}`;
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => {
-    el.classList.remove('show');
-  }, 3000);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
 }
