@@ -14,7 +14,6 @@
 #### Bibliothèque Loxone officielle
 - **615 icônes SVG** officielles Loxone
 - Recherche en temps réel
-- Grille avec scroll vertical
 
 #### Iconify — 275 000+ icônes
 Deux groupes de collections :
