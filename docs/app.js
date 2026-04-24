@@ -59,6 +59,7 @@ const state = {
   padding: 0,
   cornerRadius: 0,
   rotation: 0,
+  strokeWidth: 0,  // 0 = valeur d'origine du SVG
   previewBg: '#F0F2F5',
   currentIconName: null,
   colorSelected: false,  // false = noir au 1er chargement, true = couleur choisie
@@ -600,6 +601,11 @@ function initSliders() {
   $('rotation').addEventListener('input', e => {
     state.rotation = +e.target.value; $('rotation-val').textContent = e.target.value + '°'; applyAndRender();
   });
+  $('stroke-width').addEventListener('input', e => {
+    state.strokeWidth = +e.target.value;
+    $('stroke-width-val').textContent = e.target.value === '0' ? 'Auto' : e.target.value + 'px';
+    applyAndRender();
+  });
   $$('input[name="size"]').forEach(cb => cb.addEventListener('change', updateSizeLabel));
 }
 
@@ -652,10 +658,18 @@ function coloriseSvg(svgString, color, opacity) {
       el.setAttribute('stroke', color);
     }
 
+    // Épaisseur du trait (stroke-width) — si slider > 0
+    if (state.strokeWidth > 0 && (stroke !== null && stroke !== 'none')) {
+      el.setAttribute('stroke-width', state.strokeWidth);
+    }
+
     // Style inline : remplacer fill et stroke (sauf none)
     if (style) {
       let newStyle = style.replace(/fill\s*:\s*(?!none\b)([^;]+)/gi, `fill:${color}`);
       newStyle = newStyle.replace(/stroke\s*:\s*(?!none\b)([^;]+)/gi, `stroke:${color}`);
+      if (state.strokeWidth > 0) {
+        newStyle = newStyle.replace(/stroke-width\s*:\s*[^;]+/gi, `stroke-width:${state.strokeWidth}`);
+      }
       if (newStyle !== style) el.setAttribute('style', newStyle);
     }
   });
