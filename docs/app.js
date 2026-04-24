@@ -1,39 +1,60 @@
 /* ════════════════════════════════════════════
-   LOXONE ICON GENERATOR — APP.JS v2
-   Specs Loxone : viewBox 0 0 24 24, fill=black,
-   fill-rule=evenodd, clip-rule=evenodd, no stroke
+   LOXONE ICON GENERATOR — APP.JS v3
+   Colorisation : fill sur les paths uniquement
+   (fill="none" préservé pour les découpes)
+   Iconify API : https://api.iconify.design
    ════════════════════════════════════════════ */
 'use strict';
 
-// ─── COULEURS LOXONE CONFIG EXACTES ─────────
-// Extraites de l'interface Loxone Config (sélecteur de couleur officiel)
+// ─── COULEURS LOXONE CONFIG OFFICIEL ────────
+// Exactement les couleurs du sélecteur Loxone Config
 const LOXONE_COLORS = [
-  { hex: '#85FF66', name: 'Vert Loxone'    },
-  { hex: '#FF1B66', name: 'Rose vif'       },
-  { hex: '#FF6E33', name: 'Orange'         },
-  { hex: '#FFD93A', name: 'Jaune'          },
-  { hex: '#6EDFFF', name: 'Cyan'           },
-  { hex: '#FF5AD6', name: 'Magenta'        },
-  { hex: '#9B6CFF', name: 'Violet'         },
-  { hex: '#2D8BFF', name: 'Bleu'           },
-  { hex: '#888888', name: 'Gris'           },
+  { hex: '#85FF66', name: 'Vert Loxone'  },
+  { hex: '#FF1B66', name: 'Rose vif'     },
+  { hex: '#FF6E33', name: 'Orange'       },
+  { hex: '#FFD93A', name: 'Jaune'        },
+  { hex: '#6EDFFF', name: 'Cyan'         },
+  { hex: '#FF5AD6', name: 'Magenta'      },
+  { hex: '#9B6CFF', name: 'Violet'       },
+  { hex: '#2D8BFF', name: 'Bleu'         },
+  { hex: '#888888', name: 'Gris'         },
 ];
 
 // ─── PALETTE ÉTENDUE ─────────────────────────
 const EXT_COLORS = [
-  '#FFFFFF','#F5F5F5','#E0E0E0','#9E9E9E','#616161','#212121',
-  '#6DBE45','#1A7D37','#388E3C','#A5D6A7',
-  '#FF5722','#FF9800','#FFC107','#FFEB3B',
-  '#2196F3','#03A9F4','#00BCD4','#009688',
-  '#9C27B0','#673AB7','#3F51B5','#E91E63',
-  '#F44336','#795548','#607D8B','#455A64',
+  // Blancs / Noirs / Gris
+  { hex: '#FFFFFF', name: 'Blanc'        },
+  { hex: '#F5F5F5', name: 'Gris clair'  },
+  { hex: '#BDBDBD', name: 'Gris'        },
+  { hex: '#616161', name: 'Gris foncé'  },
+  { hex: '#212121', name: 'Noir'        },
+  // Verts Loxone
+  { hex: '#6DBE45', name: 'Loxone vert' },
+  { hex: '#4CAF50', name: 'Vert'        },
+  { hex: '#1A7D37', name: 'Vert foncé'  },
+  { hex: '#A5D6A7', name: 'Vert pastel' },
+  // Oranges / Rouges
+  { hex: '#FF5722', name: 'Rouge-Orange' },
+  { hex: '#F44336', name: 'Rouge'        },
+  { hex: '#FF9800', name: 'Orange vif'   },
+  { hex: '#FFC107', name: 'Ambre'        },
+  // Bleus / Cyan
+  { hex: '#2196F3', name: 'Bleu'         },
+  { hex: '#03A9F4', name: 'Bleu clair'   },
+  { hex: '#00BCD4', name: 'Cyan'         },
+  { hex: '#009688', name: 'Teal'         },
+  // Violets / Roses
+  { hex: '#9C27B0', name: 'Violet'       },
+  { hex: '#673AB7', name: 'Indigo foncé' },
+  { hex: '#E91E63', name: 'Rose'         },
+  { hex: '#795548', name: 'Brun'         },
 ];
 
 // ─── STATE ───────────────────────────────────
 const state = {
   svgRaw: null,
   svgColored: null,
-  iconColor: '#6DBE45',
+  iconColor: '#85FF66',  // Vert Loxone par défaut
   iconOpacity: 1,
   bgColor: '#FFFFFF',
   bgOpacity: 0,
@@ -43,9 +64,14 @@ const state = {
   previewBg: '#F0F2F5',
   currentIconName: null,
   history: [],
+  // Iconify
+  ifyResults: [],
+  ifyPage: 0,
+  ifyPageSize: 36,
+  ifyQuery: '',
+  ifyPrefix: '',
 };
 
-// ─── DOM ─────────────────────────────────────
 const $ = id => document.getElementById(id);
 const $$ = s => document.querySelectorAll(s);
 
@@ -55,7 +81,7 @@ const $$ = s => document.querySelectorAll(s);
 document.addEventListener('DOMContentLoaded', () => {
   buildLoxonePalette();
   buildExtPalette();
-  buildIconGrid();
+  buildLoxGrid();
   initTabs();
   initColorInputs();
   initSliders();
@@ -63,11 +89,14 @@ document.addEventListener('DOMContentLoaded', () => {
   initPreviewBg();
   initExport();
   initHistory();
+  initIconify();
   updateSizeLabel();
+  // Sélectionner le vert Loxone par défaut
+  $$('.lox-color-btn')[0]?.classList.add('active');
 });
 
 // ════════════════════════════════════════════
-// PALETTES
+// PALETTES COULEURS
 // ════════════════════════════════════════════
 function buildLoxonePalette() {
   const el = $('loxone-palette');
@@ -76,11 +105,10 @@ function buildLoxonePalette() {
     const btn = document.createElement('button');
     btn.className = 'lox-color-btn' + (i === 0 ? ' active' : '');
     btn.style.background = c.hex;
-    btn.title = c.name + ' — ' + c.hex;
+    btn.title = `${c.name} — ${c.hex}`;
     btn.dataset.color = c.hex;
     btn.addEventListener('click', () => {
-      $$('.lox-color-btn').forEach(b => b.classList.remove('active'));
-      $$('.ext-color-btn').forEach(b => b.classList.remove('active'));
+      $$('.lox-color-btn, .ext-color-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       setIconColor(c.hex);
     });
@@ -91,18 +119,17 @@ function buildLoxonePalette() {
 function buildExtPalette() {
   const el = $('ext-palette');
   el.innerHTML = '';
-  EXT_COLORS.forEach(hex => {
+  EXT_COLORS.forEach(c => {
     const btn = document.createElement('button');
     btn.className = 'ext-color-btn';
-    btn.style.background = hex;
-    btn.style.border = hex === '#FFFFFF' ? '2px solid #ddd' : '2px solid transparent';
-    btn.title = hex;
-    btn.dataset.color = hex;
+    btn.style.background = c.hex;
+    btn.title = `${c.name} — ${c.hex}`;
+    btn.dataset.color = c.hex;
+    if (c.hex === '#FFFFFF') btn.style.border = '2px solid #ddd';
     btn.addEventListener('click', () => {
-      $$('.lox-color-btn').forEach(b => b.classList.remove('active'));
-      $$('.ext-color-btn').forEach(b => b.classList.remove('active'));
+      $$('.lox-color-btn, .ext-color-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      setIconColor(hex);
+      setIconColor(c.hex);
     });
     el.appendChild(btn);
   });
@@ -112,15 +139,17 @@ function setIconColor(hex) {
   state.iconColor = hex;
   $('icon-color').value = hex;
   $('icon-color-hex').value = hex.toUpperCase();
+  // Mettre à jour les icônes dans la grille Loxone
+  $$('#lox-grid .icon-item img').forEach(img => applyImgFilter(img, hex));
   applyAndRender();
 }
 
 // ════════════════════════════════════════════
-// BIBLIOTHÈQUE D'ICÔNES
+// BIBLIOTHÈQUE LOXONE LOCALE (615 icônes)
 // ════════════════════════════════════════════
-function buildIconGrid(filter = '') {
-  const grid = $('icon-grid');
-  const countEl = $('search-count');
+function buildLoxGrid(filter = '') {
+  const grid = $('lox-grid');
+  const countEl = $('lox-count');
   const term = filter.toLowerCase().trim();
   const list = term
     ? LOXONE_ICONS.filter(n => n.toLowerCase().includes(term))
@@ -129,22 +158,193 @@ function buildIconGrid(filter = '') {
   countEl.textContent = list.length;
   grid.innerHTML = '';
 
-  // Rendu virtuel : on crée les éléments par batch
+  if (!list.length) {
+    grid.innerHTML = '<p class="hint" style="padding:8px;grid-column:1/-1">Aucun résultat</p>';
+    return;
+  }
+
   const frag = document.createDocumentFragment();
   list.forEach(name => {
-    const item = document.createElement('div');
-    item.className = 'icon-item' + (state.currentIconName === name ? ' selected' : '');
-    item.dataset.name = name;
-    item.title = name;
+    const item = createIconItem(name, `icons/${name}.svg`, () => {
+      $$('#lox-grid .icon-item').forEach(i => i.classList.remove('selected'));
+      item.classList.add('selected');
+      state.currentIconName = name;
+      $('filename').value = name;
+      loadIconFromLibrary(name);
+    });
+    if (state.currentIconName === name) item.classList.add('selected');
+    frag.appendChild(item);
+  });
+  grid.appendChild(frag);
+}
 
-    // Utilise une img avec src vers icons/
+function createIconItem(name, imgSrc, onClick) {
+  const item = document.createElement('div');
+  item.className = 'icon-item';
+  item.dataset.name = name;
+  item.title = name;
+
+  const img = document.createElement('img');
+  img.src = imgSrc;
+  img.alt = name;
+  img.loading = 'lazy';
+  img.onerror = () => { img.style.opacity = '0.15'; };
+  applyImgFilter(img, state.iconColor);
+
+  const label = document.createElement('span');
+  label.className = 'icon-label';
+  label.textContent = name.replace(/-/g, ' ');
+
+  item.appendChild(img);
+  item.appendChild(label);
+  item.addEventListener('click', onClick);
+  return item;
+}
+
+// Colorisation des img SVG dans les grilles via CSS filter
+// Les icônes Loxone sont noires → on applique un filtre pour les colorer
+function applyImgFilter(img, hexColor) {
+  const hex = hexColor.toUpperCase();
+  if (hex === '#000000' || hex === '#212121' || hex === '#1A1A1A') {
+    img.style.filter = 'none';
+    return;
+  }
+  if (hex === '#FFFFFF' || hex === '#F5F5F5') {
+    img.style.filter = 'invert(1)';
+    return;
+  }
+  // Pour les couleurs Loxone connues → filtres CSS pré-calculés précis
+  const knownFilters = {
+    '#85FF66': 'brightness(0) saturate(100%) invert(84%) sepia(40%) saturate(600%) hue-rotate(65deg) brightness(1.1)',
+    '#FF1B66': 'brightness(0) saturate(100%) invert(20%) sepia(90%) saturate(700%) hue-rotate(315deg) brightness(1.0)',
+    '#FF6E33': 'brightness(0) saturate(100%) invert(55%) sepia(80%) saturate(500%) hue-rotate(345deg) brightness(1.0)',
+    '#FFD93A': 'brightness(0) saturate(100%) invert(90%) sepia(50%) saturate(600%) hue-rotate(10deg) brightness(1.0)',
+    '#6EDFFF': 'brightness(0) saturate(100%) invert(85%) sepia(30%) saturate(500%) hue-rotate(170deg) brightness(1.0)',
+    '#FF5AD6': 'brightness(0) saturate(100%) invert(55%) sepia(70%) saturate(500%) hue-rotate(270deg) brightness(1.0)',
+    '#9B6CFF': 'brightness(0) saturate(100%) invert(50%) sepia(60%) saturate(500%) hue-rotate(230deg) brightness(1.0)',
+    '#2D8BFF': 'brightness(0) saturate(100%) invert(45%) sepia(80%) saturate(500%) hue-rotate(200deg) brightness(1.0)',
+    '#888888': 'brightness(0) saturate(100%) invert(55%) sepia(0%) saturate(0%) brightness(1.0)',
+    '#6DBE45': 'brightness(0) saturate(100%) invert(65%) sepia(50%) saturate(500%) hue-rotate(65deg) brightness(0.9)',
+  };
+  if (knownFilters[hex]) {
+    img.style.filter = knownFilters[hex];
+    return;
+  }
+  // Calcul générique pour les autres couleurs
+  img.style.filter = computeCssFilter(hexColor);
+}
+
+function computeCssFilter(hex) {
+  const r = parseInt(hex.slice(1,3),16)/255;
+  const g = parseInt(hex.slice(3,5),16)/255;
+  const b = parseInt(hex.slice(5,7),16)/255;
+  const max = Math.max(r,g,b), min = Math.min(r,g,b);
+  let h = 0, s = 0;
+  const l = (max+min)/2;
+  if (max !== min) {
+    const d = max-min;
+    s = l > 0.5 ? d/(2-max-min) : d/(max+min);
+    switch(max) {
+      case r: h = ((g-b)/d + (g<b?6:0))/6; break;
+      case g: h = ((b-r)/d + 2)/6; break;
+      case b: h = ((r-g)/d + 4)/6; break;
+    }
+  }
+  const hDeg = Math.round(h*360);
+  const sat  = Math.round(s*100);
+  const lum  = Math.round(l*100);
+  const bri  = Math.max(0.4, l*1.5).toFixed(2);
+  return `brightness(0) saturate(100%) invert(${Math.round(l*80)}%) sepia(80%) saturate(${Math.max(200,sat*8)}) hue-rotate(${hDeg-30}deg) brightness(${bri})`;
+}
+
+async function loadIconFromLibrary(name) {
+  showLoading(true);
+  try {
+    const res = await fetch(`icons/${name}.svg`);
+    if (!res.ok) throw new Error('Icône introuvable : ' + name);
+    const text = await res.text();
+    processSvg(text, name);
+  } catch(e) {
+    showLoading(false);
+    showToast('Erreur : ' + e.message, 'err');
+  }
+}
+
+$('lox-search').addEventListener('input', e => buildLoxGrid(e.target.value));
+
+// ════════════════════════════════════════════
+// ICONIFY — API PUBLIQUE
+// ════════════════════════════════════════════
+function initIconify() {
+  $('btn-ify-search').addEventListener('click', iconifySearch);
+  $('ify-search').addEventListener('keydown', e => { if (e.key === 'Enter') iconifySearch(); });
+  $('ify-prev').addEventListener('click', () => { state.ifyPage--; renderIconifyPage(); });
+  $('ify-next').addEventListener('click', () => { state.ifyPage++; renderIconifyPage(); });
+}
+
+async function iconifySearch() {
+  const query = $('ify-search').value.trim();
+  const prefix = $('ify-prefix').value;
+  if (!query) return showToast('Entrez un terme de recherche', 'err');
+
+  state.ifyQuery = query;
+  state.ifyPrefix = prefix;
+  state.ifyPage = 0;
+
+  const grid = $('ify-grid');
+  grid.innerHTML = '<div class="ify-loading"><div class="spinner"></div></div>';
+  $('ify-pagination').hidden = true;
+
+  try {
+    // Utilise l'API de recherche Iconify
+    let url = `https://api.iconify.design/search?query=${encodeURIComponent(query)}&limit=999`;
+    if (prefix) url += `&prefixes=${prefix}`;
+
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('API Iconify indisponible');
+    const data = await res.json();
+
+    state.ifyResults = data.icons || [];
+    if (!state.ifyResults.length) {
+      grid.innerHTML = '<p class="hint ify-placeholder">Aucun résultat trouvé.</p>';
+      return;
+    }
+    renderIconifyPage();
+  } catch(e) {
+    grid.innerHTML = `<p class="hint ify-placeholder" style="color:#E03C31">Erreur: ${e.message}</p>`;
+  }
+}
+
+function renderIconifyPage() {
+  const grid = $('ify-grid');
+  const pag = $('ify-pagination');
+  const { ifyResults, ifyPage, ifyPageSize } = state;
+  const total = ifyResults.length;
+  const totalPages = Math.ceil(total / ifyPageSize);
+  const start = ifyPage * ifyPageSize;
+  const page = ifyResults.slice(start, start + ifyPageSize);
+
+  grid.innerHTML = '';
+  const frag = document.createDocumentFragment();
+
+  page.forEach(iconId => {
+    // iconId format : "prefix:name"
+    const [prefix, ...rest] = iconId.split(':');
+    const name = rest.join(':');
+    const svgUrl = `https://api.iconify.design/${prefix}/${name}.svg`;
+
+    const item = document.createElement('div');
+    item.className = 'icon-item ify-item';
+    item.title = iconId;
+    item.dataset.iconId = iconId;
+
     const img = document.createElement('img');
-    img.src = `icons/${name}.svg`;
+    // Charger directement depuis Iconify API (icônes vectorielles, noires)
+    img.src = svgUrl;
     img.alt = name;
     img.loading = 'lazy';
-    img.onerror = () => { img.style.opacity = '0.2'; };
-    // Coloriser via CSS filter (pour la preview dans la grille)
-    applyImgColor(img, state.iconColor);
+    img.onerror = () => { img.style.opacity = '0.15'; };
+    applyImgFilter(img, state.iconColor);
 
     const label = document.createElement('span');
     label.className = 'icon-label';
@@ -158,73 +358,45 @@ function buildIconGrid(filter = '') {
       item.classList.add('selected');
       state.currentIconName = name;
       $('filename').value = name;
-      loadIconFromLibrary(name);
+      loadIconifyIcon(prefix, name);
     });
 
     frag.appendChild(item);
   });
   grid.appendChild(frag);
+
+  // Pagination
+  if (totalPages > 1) {
+    pag.hidden = false;
+    $('ify-page-info').textContent = `${ifyPage + 1} / ${totalPages} (${total} icônes)`;
+    $('ify-prev').disabled = ifyPage === 0;
+    $('ify-next').disabled = ifyPage >= totalPages - 1;
+  } else {
+    pag.hidden = true;
+  }
 }
 
-// Applique une couleur à une img SVG via CSS filter
-function applyImgColor(img, hexColor) {
-  if (hexColor === '#000000' || hexColor === '#212121') {
-    img.style.filter = '';
-    return;
-  }
-  if (hexColor === '#FFFFFF' || hexColor === '#F5F5F5') {
-    img.style.filter = 'invert(1)';
-    return;
-  }
-  // Convertir hex → filtre CSS approximatif via hue-rotate
-  const filter = hexToFilter(hexColor);
-  img.style.filter = filter;
-}
-
-// Conversion hex → CSS filter pour coloriser les SVG noirs
-// Méthode : on applique la couleur cible via un filtre CSS précis
-function hexToFilter(hex) {
-  const r = parseInt(hex.slice(1,3),16);
-  const g = parseInt(hex.slice(3,5),16);
-  const b = parseInt(hex.slice(5,7),16);
-  // Luminosité perçue
-  const lum = (0.299*r + 0.587*g + 0.114*b) / 255;
-  // HSL
-  const rn=r/255, gn=g/255, bn=b/255;
-  const max=Math.max(rn,gn,bn), min=Math.min(rn,gn,bn);
-  let h=0, s=0, l=(max+min)/2;
-  if(max!==min){
-    const d=max-min;
-    s=l>0.5?d/(2-max-min):d/(max+min);
-    switch(max){
-      case rn: h=((gn-bn)/d+(gn<bn?6:0))/6; break;
-      case gn: h=((bn-rn)/d+2)/6; break;
-      case bn: h=((rn-gn)/d+4)/6; break;
-    }
-  }
-  const hDeg=Math.round(h*360);
-  const sat=Math.round(s*100);
-  const bri=Math.round(lum*200);
-  return `brightness(0) saturate(100%) invert(1) sepia(1) saturate(5) hue-rotate(${hDeg-30}deg) brightness(${Math.max(0.3, lum*1.8).toFixed(2)})`;
-}
-
-async function loadIconFromLibrary(name) {
+async function loadIconifyIcon(prefix, name) {
   showLoading(true);
   try {
-    const res = await fetch(`icons/${name}.svg`);
-    if (!res.ok) throw new Error('Icône introuvable');
-    const text = await res.text();
-    processSvg(text, name);
+    const url = `https://api.iconify.design/${prefix}/${name}.svg`;
+    let text;
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error();
+      text = await res.text();
+    } catch {
+      const proxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+      const r2 = await fetch(proxy);
+      text = await r2.text();
+    }
+    if (!text.includes('<svg')) throw new Error('SVG invalide');
+    processSvg(text, `${prefix}-${name}`);
   } catch(e) {
     showLoading(false);
-    showToast('Erreur chargement icône', 'err');
+    showToast('Impossible de charger depuis Iconify', 'err');
   }
 }
-
-// Recherche
-$('icon-search').addEventListener('input', e => {
-  buildIconGrid(e.target.value);
-});
 
 // ════════════════════════════════════════════
 // TABS
@@ -244,7 +416,7 @@ function initTabs() {
     if (!url) return showToast('Entrez une URL SVG', 'err');
     loadFromUrl(url);
   });
-  $('svg-url').addEventListener('keydown', e => { if(e.key==='Enter') $('btn-load-url').click(); });
+  $('svg-url').addEventListener('keydown', e => { if (e.key === 'Enter') $('btn-load-url').click(); });
 
   $('btn-load-code').addEventListener('click', () => {
     const code = $('svg-code').value.trim();
@@ -273,7 +445,7 @@ async function loadFromUrl(url) {
       const r2 = await fetch(proxy);
       text = await r2.text();
     }
-    if (!text.includes('<svg') && !text.includes('<SVG')) throw new Error('Pas un SVG');
+    if (!text.includes('<svg') && !text.includes('<SVG')) throw new Error('Pas un SVG valide');
     processSvg(text);
   } catch(e) {
     showLoading(false);
@@ -304,9 +476,11 @@ function processSvg(raw, name = null) {
     $('current-icon-name').textContent = name;
     $('current-icon-name').hidden = false;
     $('filename').value = name;
+  } else {
+    $('current-icon-name').hidden = true;
   }
   applyAndRender();
-  showToast(name ? `Icône "${name}" chargée` : 'SVG chargé !', 'ok');
+  showToast(name ? `"${name}" chargé !` : 'SVG chargé !', 'ok');
 }
 
 // ════════════════════════════════════════════
@@ -317,7 +491,8 @@ function initDropZone() {
   zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
   zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
   zone.addEventListener('drop', e => {
-    e.preventDefault(); zone.classList.remove('drag-over');
+    e.preventDefault();
+    zone.classList.remove('drag-over');
     if (e.dataTransfer.files[0]) readFile(e.dataTransfer.files[0]);
   });
 }
@@ -326,7 +501,12 @@ function initDropZone() {
 // COLOR INPUTS
 // ════════════════════════════════════════════
 function initColorInputs() {
-  syncColor($('icon-color'), $('icon-color-hex'), val => { state.iconColor = val; applyAndRender(); });
+  syncColor($('icon-color'), $('icon-color-hex'), val => {
+    state.iconColor = val;
+    syncPaletteActive(val);
+    $$('#lox-grid .icon-item img, #ify-grid .icon-item img').forEach(img => applyImgFilter(img, val));
+    applyAndRender();
+  });
   syncColor($('bg-color'), $('bg-color-hex'), val => { state.bgColor = val; applyAndRender(); });
 
   $('icon-opacity').addEventListener('input', e => {
@@ -345,17 +525,16 @@ function syncColor(colorEl, hexEl, cb) {
   colorEl.addEventListener('input', () => {
     hexEl.value = colorEl.value.toUpperCase();
     cb(colorEl.value);
-    syncPaletteActive(colorEl.value);
   });
   hexEl.addEventListener('input', () => {
     const v = hexEl.value;
-    if (/^#[0-9A-Fa-f]{6}$/.test(v)) { colorEl.value = v; cb(v); syncPaletteActive(v); }
+    if (/^#[0-9A-Fa-f]{6}$/.test(v)) { colorEl.value = v; cb(v); }
   });
   hexEl.addEventListener('blur', () => {
-    let v = hexEl.value;
+    let v = hexEl.value.trim();
     if (!v.startsWith('#')) v = '#' + v;
     if (/^#[0-9A-Fa-f]{6}$/.test(v)) {
-      hexEl.value = v.toUpperCase(); colorEl.value = v; cb(v); syncPaletteActive(v);
+      hexEl.value = v.toUpperCase(); colorEl.value = v; cb(v);
     } else { hexEl.value = colorEl.value.toUpperCase(); }
   });
 }
@@ -364,8 +543,6 @@ function syncPaletteActive(hex) {
   const norm = hex.toUpperCase();
   $$('.lox-color-btn').forEach(b => b.classList.toggle('active', b.dataset.color.toUpperCase() === norm));
   $$('.ext-color-btn').forEach(b => b.classList.toggle('active', b.dataset.color.toUpperCase() === norm));
-  // Mettre à jour les imgs de la grille
-  $$('.icon-item img').forEach(img => applyImgColor(img, hex));
 }
 
 // ════════════════════════════════════════════
@@ -390,42 +567,72 @@ function updateSizeLabel() {
 }
 
 // ════════════════════════════════════════════
-// SVG COLORISATION (fidèle aux specs Loxone)
+// SVG COLORISATION — FIDÈLE AUX SPECS LOXONE
 // ════════════════════════════════════════════
+// Principe : on colore uniquement les éléments avec fill ≠ "none"
+// fill="none" est préservé (découpes, transparences dans les icônes)
+// Le SVG Loxone utilise fill=black sur les paths → on remplace par la couleur choisie
 function coloriseSvg(svgString, color, opacity) {
   const parser = new DOMParser();
   const doc = parser.parseFromString(svgString, 'image/svg+xml');
   const svgEl = doc.querySelector('svg');
   if (!svgEl) return svgString;
 
-  // Supprimer couleurs existantes inline pour repartir propre
-  const allEls = svgEl.querySelectorAll('*');
-  allEls.forEach(el => {
+  // ── Traitement de la balise <svg> racine ──
+  const rootFill = svgEl.getAttribute('fill');
+  // Si le SVG racine a fill="none", on le garde (pattern typique Loxone)
+  // Si fill est absent ou black/currentColor, on met la couleur
+  if (!rootFill || rootFill === 'none') {
+    // On ne touche pas à fill="none" sur la racine
+    // mais on met fill sur la racine pour hériter sur les paths sans fill
+    if (!rootFill) svgEl.setAttribute('fill', color);
+  } else if (rootFill !== 'none') {
+    svgEl.setAttribute('fill', color);
+  }
+
+  // ── Traitement de tous les éléments enfants ──
+  svgEl.querySelectorAll('*').forEach(el => {
+    const tag = el.tagName.toLowerCase();
+    // Ne pas toucher aux éléments de définition/structure
+    if (tag === 'defs' || tag === 'clippath' || tag === 'lineargradient' ||
+        tag === 'radialgradient' || tag === 'pattern' || tag === 'mask') return;
+
     const fill = el.getAttribute('fill');
-    const style = (el.getAttribute('style') || '');
-    // On colorise uniquement les éléments qui ne sont pas fill=none
-    if (fill && fill !== 'none') {
-      el.setAttribute('fill', color);
+    const style = el.getAttribute('style') || '';
+
+    // Colorer uniquement si fill est défini et ≠ "none"
+    // → préserve les trous/découpes (fill="none")
+    if (fill !== null && fill !== 'none') {
+      // fill="black", fill="white", fill="currentColor", fill="#000", etc.
+      // → on remplace par la couleur choisie
+      if (fill === 'white' || fill === '#fff' || fill === '#ffffff' || fill === '#FFF' || fill === '#FFFFFF') {
+        // Les fills blancs dans les icônes Loxone sont des trous internes
+        // → on les garde blancs (ou on les rend légèrement transparents)
+        // NE PAS COLORER — c'est une découpe visuelle
+        // (les 7 icônes avec fill=white ont des trous internes)
+      } else {
+        el.setAttribute('fill', color);
+      }
     }
-    if (!fill && el.tagName !== 'defs' && el.tagName !== 'clipPath') {
-      // Hérite : pas besoin de toucher
-    }
-    // Si fill est dans le style inline
-    if (style.includes('fill:') && !style.includes('fill:none')) {
-      el.setAttribute('style', style.replace(/fill:[^;]*/g, `fill:${color}`));
+
+    // Style inline avec fill
+    if (style) {
+      let newStyle = style;
+      // Remplacer fill: xxx sauf fill: none
+      newStyle = newStyle.replace(/fill\s*:\s*(?!none\b)([^;]+)/gi, `fill:${color}`);
+      if (newStyle !== style) el.setAttribute('style', newStyle);
     }
   });
 
-  // Le SVG lui-même
-  svgEl.setAttribute('fill', color);
-
-  // Opacité
+  // Opacité globale
   if (opacity < 1) svgEl.setAttribute('opacity', opacity.toFixed(2));
   else svgEl.removeAttribute('opacity');
 
-  // S'assurer que viewBox est présent (standard Loxone : 0 0 24 24)
+  // ViewBox standard Loxone si absent
   if (!svgEl.getAttribute('viewBox')) {
-    svgEl.setAttribute('viewBox', '0 0 24 24');
+    const w = parseFloat(svgEl.getAttribute('width')) || 24;
+    const h = parseFloat(svgEl.getAttribute('height')) || 24;
+    svgEl.setAttribute('viewBox', `0 0 ${w} ${h}`);
   }
 
   return new XMLSerializer().serializeToString(doc);
@@ -443,27 +650,21 @@ function applyAndRender() {
 async function renderAll() {
   if (!state.svgRaw) return;
   try {
-    // Preview principale 256px
     await renderToCanvas($('preview-canvas'), 256);
     $('preview-empty').hidden = true;
     $('preview-canvas').hidden = false;
     $('mini-strip').hidden = false;
-
-    // Mini previews
     await renderToCanvas($('mini-48'), 48);
     await renderToCanvas($('mini-64'), 64);
     await renderToCanvas($('mini-128'), 128);
-
     showLoading(false);
   } catch(e) {
     showLoading(false);
-    console.error(e);
+    console.error('Rendu échoué:', e);
   }
 }
 
 // ─── MOTEUR DE RENDU CANVAS ──────────────────
-// Conforme aux specs Loxone : carré, fond transparent par défaut,
-// fill-rule=evenodd, viewBox 0 0 24 24
 async function renderToCanvas(canvas, size) {
   const ctx = canvas.getContext('2d');
   canvas.width = size;
@@ -486,16 +687,13 @@ async function renderToCanvas(canvas, size) {
     ctx.restore();
   }
 
-  // SVG colorisé
   const svg = state.svgColored || state.svgRaw;
   if (!svg) return;
 
   const pad = Math.round((state.padding / 100) * size);
   const drawSize = size - 2 * pad;
 
-  // Injecter les dimensions dans le SVG
   const svgReady = prepareSvgForCanvas(svg, drawSize);
-
   const blob = new Blob([svgReady], { type: 'image/svg+xml;charset=utf-8' });
   const url = URL.createObjectURL(blob);
 
@@ -520,23 +718,14 @@ function prepareSvgForCanvas(svg, size) {
   const doc = parser.parseFromString(svg, 'image/svg+xml');
   const svgEl = doc.querySelector('svg');
   if (!svgEl) return svg;
-
-  // Forcer les dimensions
   svgEl.setAttribute('width', size);
   svgEl.setAttribute('height', size);
-
-  // Assurer viewBox (standard Loxone 24x24)
   if (!svgEl.getAttribute('viewBox')) {
     const w = parseFloat(svgEl.getAttribute('width')) || 24;
     const h = parseFloat(svgEl.getAttribute('height')) || 24;
     svgEl.setAttribute('viewBox', `0 0 ${w} ${h}`);
   }
-
-  // Ajouter xmlns si manquant
-  if (!svgEl.getAttribute('xmlns')) {
-    svgEl.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-  }
-
+  if (!svgEl.getAttribute('xmlns')) svgEl.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
   return new XMLSerializer().serializeToString(doc);
 }
 
@@ -586,7 +775,6 @@ async function exportSingle() {
   if (!state.svgRaw) return showToast('Chargez une icône d\'abord', 'err');
   const sizes = getSelectedSizes();
   if (!sizes.length) return showToast('Sélectionnez au moins une taille', 'err');
-  // Télécharger la taille la plus grande sélectionnée
   const size = sizes[sizes.length - 1];
   const canvas = $('render-canvas');
   await renderToCanvas(canvas, size);
@@ -616,7 +804,7 @@ async function exportZip() {
   }
 
   if (inclSvg && state.svgColored) {
-    zip.file(baseName() + '.svg', new Blob([state.svgColored], { type: 'image/svg+xml' }));
+    zip.file(baseName() + '_colored.svg', new Blob([state.svgColored], { type: 'image/svg+xml' }));
   }
 
   const zipBlob = await zip.generateAsync({ type: 'blob' });
@@ -626,7 +814,6 @@ async function exportZip() {
   a.click();
   URL.revokeObjectURL(a.href);
 
-  // Historique avec la dernière taille
   await renderToCanvas(canvas, sizes[sizes.length - 1]);
   addToHistory(canvas, buildFilename(sizes[sizes.length - 1]), sizes[sizes.length - 1]);
 
@@ -670,20 +857,18 @@ function addToHistory(canvas, name, size) {
 
 function renderHistory() {
   const grid = $('history-grid');
-  const empty = $('hist-empty');
   const badge = $('hist-count');
   const clearBtn = $('btn-clear-hist');
-
   badge.textContent = state.history.length;
   clearBtn.hidden = state.history.length === 0;
 
   if (!state.history.length) {
-    grid.innerHTML = '<p class="hint" id="hist-empty">Aucune icône générée.</p>';
+    grid.innerHTML = '<p class="hint">Aucune icône générée.</p>';
     return;
   }
 
   grid.innerHTML = state.history.map((item, i) => `
-    <div class="hist-item" title="${item.name} — ${item.size}px" data-i="${i}">
+    <div class="hist-item" title="${item.name} — ${item.size}px">
       <img src="${item.dataUrl}" alt="${item.name}" />
       <div class="hist-dl" data-i="${i}">⬇</div>
     </div>
@@ -702,7 +887,7 @@ function renderHistory() {
 }
 
 // ════════════════════════════════════════════
-// LOADING
+// LOADING / TOAST
 // ════════════════════════════════════════════
 function showLoading(show) {
   const stage = $('preview-stage');
@@ -719,9 +904,6 @@ function showLoading(show) {
   }
 }
 
-// ════════════════════════════════════════════
-// TOAST
-// ════════════════════════════════════════════
 let toastTimer;
 function showToast(msg, type = 'ok') {
   const el = $('toast');

@@ -16,9 +16,13 @@
     </svg>
     <div>
       <span class="logo-title">Loxone <strong>Icon Generator</strong></span>
-      <span class="logo-sub">615 icônes officielles · Export PNG optimisé</span>
+      <span class="logo-sub">615 icônes officielles · Iconify 275k+ · Export PNG optimisé</span>
     </div>
   </div>
+  <a class="gh-link" href="https://github.com/Jamsta/generateur-icone-png-loxone" target="_blank" rel="noopener">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.477 2 2 6.484 2 12.021c0 4.428 2.865 8.184 6.839 9.504.5.092.682-.217.682-.482 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844a9.59 9.59 0 012.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.021C22 6.484 17.522 2 12 2z"/></svg>
+    GitHub
+  </a>
 </header>
 
 <main>
@@ -30,28 +34,67 @@
     <div class="card">
       <h2><i class="step">1</i> Source SVG</h2>
       <div class="tabs" id="source-tabs">
-        <button class="tab active" data-tab="library">📚 Bibliothèque</button>
+        <button class="tab active" data-tab="loxone">🏠 Loxone</button>
+        <button class="tab" data-tab="iconify">🌐 Iconify</button>
         <button class="tab" data-tab="url">🔗 URL</button>
         <button class="tab" data-tab="file">📁 Fichier</button>
         <button class="tab" data-tab="code">✏️ Code</button>
       </div>
 
-      <!-- BIBLIOTHÈQUE -->
-      <div class="tab-content active" id="tab-library">
+      <!-- LOXONE LIBRARY -->
+      <div class="tab-content active" id="tab-loxone">
         <div class="search-box">
-          <input type="text" id="icon-search" placeholder="🔍 Rechercher une icône…" autocomplete="off" />
-          <span id="search-count" class="search-count">615</span>
+          <input type="text" id="lox-search" placeholder="🔍 Rechercher parmi 615 icônes Loxone…" autocomplete="off" />
+          <span id="lox-count" class="search-count">615</span>
         </div>
-        <div class="icon-grid" id="icon-grid"></div>
+        <div class="icon-grid" id="lox-grid"></div>
+      </div>
+
+      <!-- ICONIFY -->
+      <div class="tab-content" id="tab-iconify">
+        <div class="iconify-search-row">
+          <div class="search-box" style="flex:1;margin-bottom:0">
+            <input type="text" id="ify-search" placeholder="🔍 Rechercher (ex: home, alarm, lock…)" autocomplete="off" />
+          </div>
+          <button class="btn btn-primary" id="btn-ify-search">Go</button>
+        </div>
+        <div class="ify-filters">
+          <select id="ify-prefix">
+            <option value="">Toutes collections</option>
+            <option value="mdi">Material Design Icons</option>
+            <option value="material-symbols">Material Symbols</option>
+            <option value="ph">Phosphor</option>
+            <option value="tabler">Tabler Icons</option>
+            <option value="lucide">Lucide</option>
+            <option value="heroicons">Heroicons</option>
+            <option value="carbon">Carbon</option>
+            <option value="bi">Bootstrap Icons</option>
+            <option value="clarity">Clarity</option>
+            <option value="jam">Jam Icons</option>
+            <option value="uil">Unicons</option>
+            <option value="feather">Feather</option>
+            <option value="ri">Remix Icons</option>
+            <option value="ion">Ionicons</option>
+            <option value="fa6-solid">Font Awesome Solid</option>
+          </select>
+        </div>
+        <div class="icon-grid" id="ify-grid">
+          <p class="hint ify-placeholder">Tapez un terme et appuyez sur Go…</p>
+        </div>
+        <div class="ify-pagination" id="ify-pagination" hidden>
+          <button class="btn btn-secondary btn-sm" id="ify-prev">◀</button>
+          <span id="ify-page-info">1 / 1</span>
+          <button class="btn btn-secondary btn-sm" id="ify-next">▶</button>
+        </div>
       </div>
 
       <!-- URL -->
       <div class="tab-content" id="tab-url">
         <div class="input-row">
-          <input type="text" id="svg-url" placeholder="https://…/icon.svg" />
+          <input type="text" id="svg-url" placeholder="https://…/icon.svg ou URL Iconify" />
           <button class="btn btn-primary" id="btn-load-url">Charger</button>
         </div>
-        <p class="hint mt8">Fonctionne avec Material Icons, Feather, Phosphor, Heroicons…</p>
+        <p class="hint mt8">Ex: https://api.iconify.design/mdi/home.svg</p>
       </div>
 
       <!-- FICHIER -->
@@ -75,19 +118,21 @@
     <div class="card">
       <h2><i class="step">2</i> Couleur</h2>
 
-      <!-- Bandeau Loxone Config -->
+      <!-- Bandeau Loxone Config officiel -->
       <div class="color-section-label">
         <svg width="12" height="12" viewBox="0 0 40 40"><rect width="40" height="40" rx="5" fill="#6DBE45"/><path d="M8 28V12h4v12h10v4H8zm14-16h4v16h-4V12z" fill="white"/></svg>
-        Couleurs Loxone Config
+        Loxone Config — Palette officielle
       </div>
-      <div class="loxone-palette" id="loxone-palette"></div>
+      <div class="loxone-palette-wrap">
+        <div class="loxone-palette" id="loxone-palette"></div>
+      </div>
 
       <!-- Palette étendue -->
-      <div class="color-section-label mt12">🎨 Palette étendue</div>
+      <div class="color-section-label mt12">🎨 Couleurs supplémentaires</div>
       <div class="ext-palette" id="ext-palette"></div>
 
       <!-- Custom -->
-      <div class="color-section-label mt12">⚙️ Personnalisée</div>
+      <div class="color-section-label mt12">⚙️ Couleur personnalisée</div>
       <div class="custom-color-row">
         <input type="color" id="icon-color" value="#6DBE45" />
         <input type="text" id="icon-color-hex" value="#6DBE45" maxlength="9" class="hex-input" />
