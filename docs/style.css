@@ -772,6 +772,16 @@ input[type="color"]:hover { border-color: var(--border-hover); }
   border: 1px solid rgba(124,92,191,.18);
   color: #6244a8;
 }
+.ai-status.ai-retry {
+  background: rgba(230,162,30,.09);
+  border: 1px solid rgba(230,162,30,.28);
+  color: #b07d10;
+}
+.ai-status.ai-retry .spinner {
+  border-color: rgba(230,162,30,.2);
+  border-top-color: #e6a21e;
+}
+.ai-status.ai-retry strong { color: #8a5e00; }
 .ai-status.ai-error {
   background: rgba(201,74,74,.07);
   border: 1px solid rgba(201,74,74,.2);

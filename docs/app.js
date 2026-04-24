@@ -1141,6 +1141,74 @@ function aiGetKey() {
   return $('ai-api-key').value.trim() || localStorage.getItem(AI_LS_KEY) || '';
 }
 
+// Appel Gemini avec retry automatique (max 3 tentatives, backoff exponentiel)
+async function aiCallGemini(model, apiKey, body, attempt = 1) {
+  const MAX_ATTEMPTS = 3;
+  const statusEl = $('ai-status');
+
+  const res = await fetch(AI_GEMINI_URL(model, apiKey), {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(body)
+  });
+
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    const msg = errData.error?.message || `Erreur HTTP ${res.status}`;
+
+    // Clé invalide → pas de retry
+    if (res.status === 400 || res.status === 403) {
+      throw new Error('Clé API invalide ou expirée — vérifie sur aistudio.google.com/apikey');
+    }
+
+    // Quota dépassé → pas de retry
+    if (res.status === 429 && (msg.includes('limit: 0') || msg.includes('quota'))) {
+      throw new Error('Quota dépassé — essaie un autre modèle dans la liste, ou crée une nouvelle clé dans un nouveau projet Google');
+    }
+
+    // Surcharge temporaire (503 ou message "high demand") → retry avec countdown
+    const isOverload = res.status === 503
+      || msg.toLowerCase().includes('high demand')
+      || msg.toLowerCase().includes('overloaded')
+      || msg.toLowerCase().includes('try again');
+
+    if (isOverload && attempt < MAX_ATTEMPTS) {
+      const delay = attempt * 5; // 5s, 10s
+      // Countdown visuel
+      await aiCountdown(delay, attempt, MAX_ATTEMPTS);
+      return aiCallGemini(model, apiKey, body, attempt + 1);
+    }
+
+    // Surcharge et plus de retry
+    if (isOverload) {
+      throw new Error('Serveur Gemini surchargé — réessaie dans quelques secondes ou change de modèle');
+    }
+
+    throw new Error(msg);
+  }
+
+  return res.json();
+}
+
+// Countdown visuel pendant le retry
+function aiCountdown(seconds, attempt, maxAttempts) {
+  return new Promise(resolve => {
+    const statusEl = $('ai-status');
+    let remaining = seconds;
+
+    const tick = () => {
+      statusEl.className = 'ai-status ai-loading ai-retry';
+      statusEl.innerHTML = `
+        <div class="spinner"></div>
+        <span>Serveur surchargé — tentative ${attempt}/${maxAttempts} dans <strong>${remaining}s</strong>…</span>`;
+      if (remaining <= 0) { resolve(); return; }
+      remaining--;
+      setTimeout(tick, 1000);
+    };
+    tick();
+  });
+}
+
 async function aiGenerate() {
   const apiKey = aiGetKey();
   if (!apiKey) {
@@ -1166,43 +1234,14 @@ async function aiGenerate() {
   statusEl.innerHTML = `<div class="spinner"></div><span>Génération via ${model}…</span>`;
   $('btn-ai-generate').disabled = true;
 
+  const body = {
+    system_instruction: { parts: [{ text: AI_SYSTEM_PROMPT }] },
+    contents: [{ parts: [{ text: `Create a Loxone SVG icon for: "${prompt}"\n\n${styleInstr}\n\nRespond ONLY with the SVG code. Nothing else.` }] }],
+    generationConfig: { temperature: 0.3, maxOutputTokens: 1200, topP: 0.8 }
+  };
+
   try {
-    // Format API Gemini (différent d'OpenAI)
-    const body = {
-      system_instruction: {
-        parts: [{ text: AI_SYSTEM_PROMPT }]
-      },
-      contents: [{
-        parts: [{
-          text: `Create a Loxone SVG icon for: "${prompt}"\n\n${styleInstr}\n\nRespond ONLY with the SVG code. Nothing else.`
-        }]
-      }],
-      generationConfig: {
-        temperature:     0.3,
-        maxOutputTokens: 1200,
-        topP:            0.8,
-      }
-    };
-
-    const res = await fetch(AI_GEMINI_URL(model, apiKey), {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(body)
-    });
-
-    if (!res.ok) {
-      const errData = await res.json().catch(() => ({}));
-      const msg = errData.error?.message || `Erreur HTTP ${res.status}`;
-      if (res.status === 400 || res.status === 403) {
-        throw new Error('Clé API invalide ou expirée — vérifie sur aistudio.google.com/apikey');
-      }
-      if (res.status === 429 || msg.includes('quota') || msg.includes('limit: 0')) {
-        throw new Error('Quota dépassé — essaie un autre modèle dans la liste, ou crée une nouvelle clé dans un nouveau projet Google');
-      }
-      throw new Error(msg);
-    }
-
-    const data = await res.json();
+    const data = await aiCallGemini(model, apiKey, body);
 
     // Extraire le texte de la réponse Gemini
     let svgText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
@@ -1229,7 +1268,11 @@ async function aiGenerate() {
 
   } catch (e) {
     statusEl.className = 'ai-status ai-error';
-    statusEl.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> ${e.message}`;
+    statusEl.innerHTML = `
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <span>${e.message}</span>`;
     console.error('Gemini AI error:', e);
   } finally {
     $('btn-ai-generate').disabled = false;
