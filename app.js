@@ -1069,9 +1069,8 @@ function showToast(msg, type = 'ok') {
 // Clé stockée dans localStorage — jamais envoyée ailleurs
 // ════════════════════════════════════════════
 
-const AI_GEMINI_MODEL = 'gemini-2.0-flash';
-const AI_GEMINI_URL   = key =>
-  `https://generativelanguage.googleapis.com/v1beta/models/${AI_GEMINI_MODEL}:generateContent?key=${key}`;
+const AI_GEMINI_URL = (model, key) =>
+  `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
 
 // Prompt optimisé pour Gemini — génère des SVG fill conformes Loxone
 const AI_SYSTEM_PROMPT = `You are an SVG icon designer specialized in Loxone Config icons.
@@ -1155,6 +1154,7 @@ async function aiGenerate() {
 
   const style      = $('ai-style').value;
   const styleInstr = getAiStyleInstruction(style);
+  const model      = $('ai-model').value;
 
   const statusEl = $('ai-status');
   const resultEl = $('ai-result');
@@ -1163,7 +1163,7 @@ async function aiGenerate() {
   resultEl.hidden = true;
   statusEl.hidden = false;
   statusEl.className = 'ai-status ai-loading';
-  statusEl.innerHTML = '<div class="spinner"></div><span>Génération Gemini en cours…</span>';
+  statusEl.innerHTML = `<div class="spinner"></div><span>Génération via ${model}…</span>`;
   $('btn-ai-generate').disabled = true;
 
   try {
@@ -1184,7 +1184,7 @@ async function aiGenerate() {
       }
     };
 
-    const res = await fetch(AI_GEMINI_URL(apiKey), {
+    const res = await fetch(AI_GEMINI_URL(model, apiKey), {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify(body)
@@ -1193,9 +1193,11 @@ async function aiGenerate() {
     if (!res.ok) {
       const errData = await res.json().catch(() => ({}));
       const msg = errData.error?.message || `Erreur HTTP ${res.status}`;
-      // Message d'erreur clair pour clé invalide
       if (res.status === 400 || res.status === 403) {
-        throw new Error('Clé API invalide ou expirée. Vérifie ta clé sur aistudio.google.com');
+        throw new Error('Clé API invalide ou expirée — vérifie sur aistudio.google.com/apikey');
+      }
+      if (res.status === 429 || msg.includes('quota') || msg.includes('limit: 0')) {
+        throw new Error('Quota dépassé — essaie un autre modèle dans la liste, ou crée une nouvelle clé dans un nouveau projet Google');
       }
       throw new Error(msg);
     }
