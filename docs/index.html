@@ -58,24 +58,29 @@
           </div>
           <button class="btn btn-primary" id="btn-ify-search">Go</button>
         </div>
+        <div class="ify-lox-badge">
+          <svg width="11" height="11" viewBox="0 0 40 40"><rect width="40" height="40" rx="5" fill="#6DBE45"/><path d="M8 28V12h4v12h10v4H8zm14-16h4v16h-4V12z" fill="white"/></svg>
+          Uniquement les collections <strong>fill</strong> — conformes aux specs Loxone
+        </div>
         <div class="ify-filters">
           <select id="ify-prefix">
-            <option value="">Toutes collections</option>
-            <option value="mdi">Material Design Icons</option>
-            <option value="material-symbols">Material Symbols</option>
-            <option value="ph">Phosphor</option>
-            <option value="tabler">Tabler Icons</option>
-            <option value="lucide">Lucide</option>
-            <option value="heroicons">Heroicons</option>
-            <option value="carbon">Carbon</option>
-            <option value="bi">Bootstrap Icons</option>
-            <option value="clarity">Clarity</option>
-            <option value="jam">Jam Icons</option>
-            <option value="uil">Unicons</option>
-            <option value="feather">Feather</option>
-            <option value="ri">Remix Icons</option>
-            <option value="ion">Ionicons</option>
-            <option value="fa6-solid">Font Awesome Solid</option>
+            <option value="">— Choisir une collection —</option>
+            <optgroup label="✅ Fill — Compatibles Loxone">
+              <option value="mdi">Material Design Icons (7 000+)</option>
+              <option value="material-symbols" selected>Material Symbols Filled (9 000+)</option>
+              <option value="fa6-solid">Font Awesome Solid (1 400+)</option>
+              <option value="bi">Bootstrap Icons Filled (2 000+)</option>
+              <option value="ion">Ionicons Filled (1 300+)</option>
+              <option value="ri">Remix Icons Filled (2 800+)</option>
+              <option value="uil">Unicons (1 200+)</option>
+              <option value="clarity">Clarity Solid (1 100+)</option>
+              <option value="carbon">Carbon (2 000+)</option>
+              <option value="jam">Jam Icons (940+)</option>
+              <option value="fluent">Fluent UI Filled (5 000+)</option>
+              <option value="ic">Google Icons Filled (2 000+)</option>
+              <option value="bxs">BoxIcons Solid (800+)</option>
+              <option value="gg">css.gg (700+)</option>
+            </optgroup>
           </select>
         </div>
         <div class="icon-grid" id="ify-grid">

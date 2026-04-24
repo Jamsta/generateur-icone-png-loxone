@@ -153,6 +153,13 @@ main {
 }
 
 /* ── ICONIFY PANEL ── */
+.ify-lox-badge {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; color: var(--lox-dark);
+  background: rgba(109,190,69,.1); border: 1px solid rgba(109,190,69,.3);
+  border-radius: 6px; padding: 5px 9px; margin-bottom: 8px;
+}
+.ify-lox-badge strong { font-weight: 700; }
 .iconify-search-row {
   display: flex; gap: 6px; align-items: flex-start; margin-bottom: 8px;
 }

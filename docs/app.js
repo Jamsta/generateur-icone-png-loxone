@@ -282,10 +282,17 @@ function initIconify() {
   $('ify-next').addEventListener('click', () => { state.ifyPage++; renderIconifyPage(); });
 }
 
+// Collections 100% fill — compatibles specs Loxone (pas de stroke)
+const FILL_COLLECTIONS = new Set([
+  'mdi','material-symbols','fa6-solid','bi','ion','ri','uil',
+  'clarity','carbon','jam','fluent','ic','bxs','gg'
+]);
+
 async function iconifySearch() {
   const query = $('ify-search').value.trim();
   const prefix = $('ify-prefix').value;
   if (!query) return showToast('Entrez un terme de recherche', 'err');
+  if (!prefix) return showToast('Choisissez une collection fill-compatible', 'err');
 
   state.ifyQuery = query;
   state.ifyPrefix = prefix;
@@ -296,17 +303,21 @@ async function iconifySearch() {
   $('ify-pagination').hidden = true;
 
   try {
-    // Utilise l'API de recherche Iconify
-    let url = `https://api.iconify.design/search?query=${encodeURIComponent(query)}&limit=999`;
-    if (prefix) url += `&prefixes=${prefix}`;
+    let url = `https://api.iconify.design/search?query=${encodeURIComponent(query)}&limit=999&prefixes=${prefix}`;
 
     const res = await fetch(url);
     if (!res.ok) throw new Error('API Iconify indisponible');
     const data = await res.json();
 
-    state.ifyResults = data.icons || [];
+    // Filtrer uniquement les icônes des collections fill-compatible
+    const all = data.icons || [];
+    state.ifyResults = all.filter(id => {
+      const col = id.split(':')[0];
+      return FILL_COLLECTIONS.has(col);
+    });
+
     if (!state.ifyResults.length) {
-      grid.innerHTML = '<p class="hint ify-placeholder">Aucun résultat trouvé.</p>';
+      grid.innerHTML = '<p class="hint ify-placeholder">Aucun résultat fill-compatible trouvé.</p>';
       return;
     }
     renderIconifyPage();
