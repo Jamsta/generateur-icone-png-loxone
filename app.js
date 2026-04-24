@@ -295,31 +295,34 @@ async function iconifyLoadCollection(prefix) {
   state.ifyQuery = '';
 
   const grid = $('ify-grid');
-  grid.innerHTML = '<div class="ify-loading"><div class="spinner"></div></div>';
   $('ify-result-count').hidden = true;
 
+  // Cache hit → affichage instantané, pas de spinner
+  if (_collectionCache[prefix]) {
+    state.ifyResults = _collectionCache[prefix].map(n => `${prefix}:${n}`);
+    renderIconifyAll();
+    return;
+  }
+
+  grid.innerHTML = '<div class="ify-loading"><div class="spinner"></div></div>';
+
   try {
-    // L'API Iconify permet de lister une collection via /collection?prefix=xxx
     const url = `https://api.iconify.design/collection?prefix=${prefix}&pretty=0`;
     const res = await fetch(url);
     if (!res.ok) throw new Error('Collection introuvable');
     const data = await res.json();
 
-    // Les icônes sont dans data.icons (objet) ou data.categories
     let names = [];
-    if (data.icons) {
-      names = Object.keys(data.icons);
-    } else if (data.categories) {
-      Object.values(data.categories).forEach(arr => names.push(...arr));
-    } else if (data.uncategorized) {
-      names = data.uncategorized;
-    }
+    if (data.icons)              names = Object.keys(data.icons);
+    else if (data.categories)    Object.values(data.categories).forEach(arr => names.push(...arr));
+    else if (data.uncategorized) names = data.uncategorized;
 
     if (!names.length) {
       grid.innerHTML = '<p class="hint ify-placeholder">Collection vide ou introuvable.</p>';
       return;
     }
 
+    _collectionCache[prefix] = names; // Mise en cache pour re-sélection instantanée
     state.ifyResults = names.map(n => `${prefix}:${n}`);
     renderIconifyAll();
   } catch(e) {
@@ -370,52 +373,96 @@ async function iconifySearch() {
   }
 }
 
+// ── Cache des collections déjà fetchées → re-sélection instantanée ──
+const _collectionCache = {};
+
+// ── Rendu par lots de 80 + IntersectionObserver pour le reste ──
+let _ifyObserver = null;
+const IFY_BATCH = 80;
+
 function renderIconifyAll() {
-  const grid = $('ify-grid');
-  const countEl = $('ify-result-count');
-  const total = state.ifyResults.length;
+  const grid     = $('ify-grid');
+  const countEl  = $('ify-result-count');
+  const total    = state.ifyResults.length;
+
+  // Stopper l'observer précédent
+  if (_ifyObserver) { _ifyObserver.disconnect(); _ifyObserver = null; }
 
   grid.innerHTML = '';
   countEl.hidden = false;
-  countEl.textContent = `${total} icône${total > 1 ? 's' : ''} trouvée${total > 1 ? 's' : ''}`;
+  countEl.textContent = `${total} icône${total > 1 ? 's' : ''}`;
 
-  const frag = document.createDocumentFragment();
-  state.ifyResults.forEach(iconId => {
-    const [prefix, ...rest] = iconId.split(':');
-    const name = rest.join(':');
-    const svgUrl = `https://api.iconify.design/${prefix}/${name}.svg`;
+  let rendered = 0;
 
-    const item = document.createElement('div');
-    item.className = 'icon-item ify-item';
-    item.title = iconId;
-    item.dataset.iconId = iconId;
+  function renderBatch() {
+    const batch = state.ifyResults.slice(rendered, rendered + IFY_BATCH);
+    if (!batch.length) return;
 
-    const img = document.createElement('img');
-    // On force color=000000 dans l'URL pour que l'icône s'affiche en noir dans la grille
-    img.src = svgUrl + '?color=%23000000';
-    img.alt = name;
-    img.loading = 'lazy';
-    img.onerror = () => { img.style.opacity = '0.15'; };
-    img.style.filter = 'none';
+    const frag = document.createDocumentFragment();
+    batch.forEach(iconId => frag.appendChild(makeIfyItem(iconId)));
 
-    const label = document.createElement('span');
-    label.className = 'icon-label';
-    label.textContent = name.replace(/-/g, ' ');
+    // Supprimer l'ancien sentinel avant d'ajouter le nouveau lot
+    const old = grid.querySelector('.ify-sentinel');
+    if (old) old.remove();
 
-    item.appendChild(img);
-    item.appendChild(label);
+    grid.appendChild(frag);
+    rendered += batch.length;
 
-    item.addEventListener('click', () => {
-      $$('.icon-item').forEach(i => i.classList.remove('selected'));
-      item.classList.add('selected');
-      state.currentIconName = name;
-      $('filename').value = name;
-      loadIconifyIcon(prefix, name);
-    });
+    // S'il reste des icônes, poser un sentinel et observer
+    if (rendered < total) {
+      const sentinel = document.createElement('div');
+      sentinel.className = 'ify-sentinel';
+      sentinel.style.cssText = 'grid-column:1/-1;height:1px;pointer-events:none';
+      grid.appendChild(sentinel);
 
-    frag.appendChild(item);
+      _ifyObserver = new IntersectionObserver(entries => {
+        if (entries[0].isIntersecting) {
+          _ifyObserver.disconnect();
+          _ifyObserver = null;
+          renderBatch();
+        }
+      }, { root: grid, rootMargin: '120px' });
+
+      _ifyObserver.observe(sentinel);
+    }
+  }
+
+  renderBatch(); // Premier lot immédiat, sans attente
+}
+
+function makeIfyItem(iconId) {
+  const [prefix, ...rest] = iconId.split(':');
+  const name = rest.join(':');
+
+  const item = document.createElement('div');
+  item.className = 'icon-item ify-item';
+  item.title = iconId;
+  item.dataset.iconId = iconId;
+
+  const img = document.createElement('img');
+  img.src = `https://api.iconify.design/${prefix}/${name}.svg?color=%23000000`;
+  img.alt = name;
+  img.loading = 'lazy';
+  img.decoding = 'async';
+  img.onerror = () => { img.style.opacity = '0.15'; };
+  img.style.filter = 'none';
+
+  const label = document.createElement('span');
+  label.className = 'icon-label';
+  label.textContent = name.replace(/-/g, ' ');
+
+  item.appendChild(img);
+  item.appendChild(label);
+
+  item.addEventListener('click', () => {
+    $$('.icon-item').forEach(i => i.classList.remove('selected'));
+    item.classList.add('selected');
+    state.currentIconName = name;
+    $('filename').value = name;
+    loadIconifyIcon(prefix, name);
   });
-  grid.appendChild(frag);
+
+  return item;
 }
 
 async function loadIconifyIcon(prefix, name) {
