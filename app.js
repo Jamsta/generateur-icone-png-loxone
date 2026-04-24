@@ -280,11 +280,23 @@ function initIconify() {
   $('ify-search').addEventListener('keydown', e => { if (e.key === 'Enter') iconifySearch(); });
 }
 
-// Collections 100% fill — compatibles specs Loxone (pas de stroke)
-const FILL_COLLECTIONS = new Set([
-  'mdi','material-symbols','fa6-solid','bi','ion','ri','uil',
-  'clarity','carbon','jam','fluent','ic','bxs','gg'
-]);
+// Map collection -> filtre de noms à exclure (outline, regular, etc.)
+// Seules les variantes "filled" sont conformes aux specs Loxone
+const FILL_COLLECTIONS = {
+  'mdi':              name => !name.includes('-outline') && !name.includes('-off'),
+  'material-symbols': name => !name.includes('-outline') && !name.includes('_outlined'),
+  'fa6-solid':        () => true,
+  'bi':               name => !name.includes('-outline') && !name.includes('-slash'),
+  'ion':              name => !name.includes('-outline') && !name.includes('-sharp'),
+  'ri':               name => name.endsWith('-fill') || name.endsWith('-line') ? name.endsWith('-fill') : true,
+  'uil':              () => true,
+  'clarity':          name => name.endsWith('-solid'),
+  'carbon':           () => true,
+  'jam':              () => true,
+  'fluent':           name => name.includes('-filled'),
+  'ic':               name => name.startsWith('baseline-') || name.startsWith('round-') || name.startsWith('sharp-'),
+  'bxs':              () => true,
+};
 
 async function iconifySearch() {
   const query = $('ify-search').value.trim();
@@ -294,32 +306,34 @@ async function iconifySearch() {
 
   state.ifyQuery = query;
   state.ifyPrefix = prefix;
-  state.ifyPage = 0;
 
   const grid = $('ify-grid');
   grid.innerHTML = '<div class="ify-loading"><div class="spinner"></div></div>';
+  $('ify-result-count').hidden = true;
 
   try {
-    let url = `https://api.iconify.design/search?query=${encodeURIComponent(query)}&limit=999&prefixes=${prefix}`;
-
+    // Recherche globale sans restriction prefixes (certaines collections ne répondent pas à ce paramètre)
+    const url = `https://api.iconify.design/search?query=${encodeURIComponent(query)}&limit=999`;
     const res = await fetch(url);
     if (!res.ok) throw new Error('API Iconify indisponible');
     const data = await res.json();
 
-    // Filtrer uniquement les icônes des collections fill-compatible
-    const all = data.icons || [];
-    state.ifyResults = all.filter(id => {
-      const col = id.split(':')[0];
-      return FILL_COLLECTIONS.has(col);
+    const filterFn = FILL_COLLECTIONS[prefix] || (() => true);
+
+    // Filtrer par collection choisie + variantes fill uniquement
+    state.ifyResults = (data.icons || []).filter(id => {
+      const [col, ...rest] = id.split(':');
+      const name = rest.join(':');
+      return col === prefix && filterFn(name);
     });
 
     if (!state.ifyResults.length) {
-      grid.innerHTML = '<p class="hint ify-placeholder">Aucun résultat fill-compatible trouvé.</p>';
+      grid.innerHTML = '<p class="hint ify-placeholder">Aucun résultat trouvé dans cette collection.<br><small>Essayez un autre terme ou une autre collection.</small></p>';
       return;
     }
     renderIconifyAll();
   } catch(e) {
-    grid.innerHTML = `<p class="hint ify-placeholder" style="color:#E03C31">Erreur: ${e.message}</p>`;
+    grid.innerHTML = `<p class="hint ify-placeholder" style="color:#E03C31">❌ Erreur: ${e.message}</p>`;
   }
 }
 
@@ -344,7 +358,8 @@ function renderIconifyAll() {
     item.dataset.iconId = iconId;
 
     const img = document.createElement('img');
-    img.src = svgUrl;
+    // On force color=000000 dans l'URL pour que l'icône s'affiche en noir dans la grille
+    img.src = svgUrl + '?color=%23000000';
     img.alt = name;
     img.loading = 'lazy';
     img.onerror = () => { img.style.opacity = '0.15'; };
