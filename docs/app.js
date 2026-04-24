@@ -298,7 +298,6 @@ async function iconifySearch() {
 
   const grid = $('ify-grid');
   grid.innerHTML = '<div class="ify-loading"><div class="spinner"></div></div>';
-  $('ify-pagination').hidden = true;
 
   try {
     let url = `https://api.iconify.design/search?query=${encodeURIComponent(query)}&limit=999&prefixes=${prefix}`;
