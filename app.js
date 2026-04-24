@@ -278,13 +278,64 @@ $('lox-search').addEventListener('input', e => buildLoxGrid(e.target.value));
 function initIconify() {
   $('btn-ify-search').addEventListener('click', iconifySearch);
   $('ify-search').addEventListener('keydown', e => { if (e.key === 'Enter') iconifySearch(); });
+
+  // Chargement automatique à la sélection d'une collection
+  $('ify-prefix').addEventListener('change', () => {
+    const prefix = $('ify-prefix').value;
+    if (!prefix) return;
+    // Vider la recherche et charger toute la collection
+    $('ify-search').value = '';
+    iconifyLoadCollection(prefix);
+  });
+}
+
+// Charge toutes les icônes d'une collection (sans mot-clé)
+async function iconifyLoadCollection(prefix) {
+  state.ifyPrefix = prefix;
+  state.ifyQuery = '';
+
+  const grid = $('ify-grid');
+  grid.innerHTML = '<div class="ify-loading"><div class="spinner"></div></div>';
+  $('ify-result-count').hidden = true;
+
+  try {
+    // L'API Iconify permet de lister une collection via /collection?prefix=xxx
+    const url = `https://api.iconify.design/collection?prefix=${prefix}&pretty=0`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Collection introuvable');
+    const data = await res.json();
+
+    // Les icônes sont dans data.icons (objet) ou data.categories
+    let names = [];
+    if (data.icons) {
+      names = Object.keys(data.icons);
+    } else if (data.categories) {
+      Object.values(data.categories).forEach(arr => names.push(...arr));
+    } else if (data.uncategorized) {
+      names = data.uncategorized;
+    }
+
+    if (!names.length) {
+      grid.innerHTML = '<p class="hint ify-placeholder">Collection vide ou introuvable.</p>';
+      return;
+    }
+
+    state.ifyResults = names.map(n => `${prefix}:${n}`);
+    renderIconifyAll();
+  } catch(e) {
+    grid.innerHTML = `<p class="hint ify-placeholder" style="color:#d94f4f">❌ Erreur: ${e.message}</p>`;
+  }
 }
 
 async function iconifySearch() {
   const query = $('ify-search').value.trim();
   const prefix = $('ify-prefix').value;
-  if (!query) return showToast('Entrez un terme de recherche', 'err');
   if (!prefix) return showToast('Choisissez une collection', 'err');
+
+  // Si pas de mot-clé → charger toute la collection
+  if (!query) {
+    return iconifyLoadCollection(prefix);
+  }
 
   state.ifyQuery = query;
   state.ifyPrefix = prefix;
@@ -294,13 +345,11 @@ async function iconifySearch() {
   $('ify-result-count').hidden = true;
 
   try {
-    // Recherche dans la collection choisie sans aucun filtre de variante
     const url = `https://api.iconify.design/search?query=${encodeURIComponent(query)}&limit=999&prefixes=${prefix}`;
     const res = await fetch(url);
     if (!res.ok) throw new Error('API Iconify indisponible');
     const data = await res.json();
 
-    // Garder uniquement les résultats de la collection choisie
     state.ifyResults = (data.icons || []).filter(id => id.startsWith(prefix + ':'));
 
     if (!state.ifyResults.length) {
@@ -312,12 +361,12 @@ async function iconifySearch() {
     }
 
     if (!state.ifyResults.length) {
-      grid.innerHTML = '<p class="hint ify-placeholder">Aucun résultat trouvé.<br><small>Essayez un autre terme.</small></p>';
+      grid.innerHTML = '<p class="hint ify-placeholder">Aucun résultat.<br><small>Essayez un autre terme.</small></p>';
       return;
     }
     renderIconifyAll();
   } catch(e) {
-    grid.innerHTML = `<p class="hint ify-placeholder" style="color:#E03C31">❌ Erreur: ${e.message}</p>`;
+    grid.innerHTML = `<p class="hint ify-placeholder" style="color:#d94f4f">❌ Erreur: ${e.message}</p>`;
   }
 }
 
