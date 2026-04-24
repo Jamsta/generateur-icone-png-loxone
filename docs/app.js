@@ -462,6 +462,56 @@ async function loadFromUrl(url) {
   }
 }
 
+// Normalise un SVG en remplaçant currentColor, inherit, etc. par black
+// Indispensable pour les SVG Iconify qui utilisent currentColor
+function normalizeSvgToBlack(svgString) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(svgString, 'image/svg+xml');
+  const svgEl = doc.querySelector('svg');
+  if (!svgEl) return svgString;
+
+  // Racine SVG : si fill="currentColor" ou pas de fill → mettre black
+  const rootFill = svgEl.getAttribute('fill');
+  if (!rootFill || rootFill === 'currentColor' || rootFill === 'inherit') {
+    svgEl.setAttribute('fill', 'black');
+  }
+
+  // Tous les éléments enfants
+  svgEl.querySelectorAll('*').forEach(el => {
+    const fill = el.getAttribute('fill');
+    const stroke = el.getAttribute('stroke');
+    const style = el.getAttribute('style') || '';
+
+    // fill="currentColor" ou fill="inherit" → black
+    if (fill === 'currentColor' || fill === 'inherit') {
+      el.setAttribute('fill', 'black');
+    }
+    // stroke="currentColor" → black (pour les icônes mixtes)
+    if (stroke === 'currentColor' || stroke === 'inherit') {
+      el.setAttribute('stroke', 'black');
+    }
+    // Style inline avec currentColor
+    if (style.includes('currentColor') || style.includes('inherit')) {
+      el.setAttribute('style',
+        style
+          .replace(/fill\s*:\s*currentColor/gi, 'fill:black')
+          .replace(/fill\s*:\s*inherit/gi, 'fill:black')
+          .replace(/stroke\s*:\s*currentColor/gi, 'stroke:black')
+          .replace(/stroke\s*:\s*inherit/gi, 'stroke:black')
+      );
+    }
+  });
+
+  // S'assurer que viewBox est présent
+  if (!svgEl.getAttribute('viewBox')) {
+    const w = parseFloat(svgEl.getAttribute('width')) || 24;
+    const h = parseFloat(svgEl.getAttribute('height')) || 24;
+    svgEl.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  }
+
+  return new XMLSerializer().serializeToString(doc);
+}
+
 function readFile(file) {
   if (!file.name.endsWith('.svg') && file.type !== 'image/svg+xml')
     return showToast('Fichier SVG requis', 'err');
@@ -479,6 +529,9 @@ function processSvg(raw, name = null) {
     showLoading(false);
     return showToast('SVG invalide', 'err');
   }
+  // Normaliser currentColor → black avant stockage
+  // Les SVG Iconify utilisent currentColor qui hérite du CSS parent (vert)
+  svg = normalizeSvgToBlack(svg);
   state.svgRaw = svg;
   if (name) {
     state.currentIconName = name;
