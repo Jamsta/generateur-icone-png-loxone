@@ -139,8 +139,7 @@ function setIconColor(hex) {
   state.iconColor = hex;
   $('icon-color').value = hex;
   $('icon-color-hex').value = hex.toUpperCase();
-  // Mettre à jour les icônes dans la grille Loxone
-  $$('#lox-grid .icon-item img').forEach(img => applyImgFilter(img, hex));
+  // Les icônes dans la grille restent en NOIR — couleur appliquée uniquement au rendu PNG
   applyAndRender();
 }
 
@@ -189,7 +188,8 @@ function createIconItem(name, imgSrc, onClick) {
   img.alt = name;
   img.loading = 'lazy';
   img.onerror = () => { img.style.opacity = '0.15'; };
-  applyImgFilter(img, state.iconColor);
+  // Grille toujours en noir — la couleur ne s'applique qu'au rendu PNG
+  img.style.filter = 'none';
 
   const label = document.createElement('span');
   label.className = 'icon-label';
@@ -344,7 +344,8 @@ function renderIconifyPage() {
     img.alt = name;
     img.loading = 'lazy';
     img.onerror = () => { img.style.opacity = '0.15'; };
-    applyImgFilter(img, state.iconColor);
+    // Grille Iconify aussi en noir — couleur uniquement sur le rendu PNG
+    img.style.filter = 'none';
 
     const label = document.createElement('span');
     label.className = 'icon-label';
@@ -504,7 +505,7 @@ function initColorInputs() {
   syncColor($('icon-color'), $('icon-color-hex'), val => {
     state.iconColor = val;
     syncPaletteActive(val);
-    $$('#lox-grid .icon-item img, #ify-grid .icon-item img').forEach(img => applyImgFilter(img, val));
+    // Grille reste en noir — pas de filtre sur les imgs
     applyAndRender();
   });
   syncColor($('bg-color'), $('bg-color-hex'), val => { state.bgColor = val; applyAndRender(); });
@@ -543,6 +544,7 @@ function syncPaletteActive(hex) {
   const norm = hex.toUpperCase();
   $$('.lox-color-btn').forEach(b => b.classList.toggle('active', b.dataset.color.toUpperCase() === norm));
   $$('.ext-color-btn').forEach(b => b.classList.toggle('active', b.dataset.color.toUpperCase() === norm));
+  // Pas de mise à jour des filtres de la grille — icônes toujours en noir
 }
 
 // ════════════════════════════════════════════
