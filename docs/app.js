@@ -278,8 +278,6 @@ $('lox-search').addEventListener('input', e => buildLoxGrid(e.target.value));
 function initIconify() {
   $('btn-ify-search').addEventListener('click', iconifySearch);
   $('ify-search').addEventListener('keydown', e => { if (e.key === 'Enter') iconifySearch(); });
-  $('ify-prev').addEventListener('click', () => { state.ifyPage--; renderIconifyPage(); });
-  $('ify-next').addEventListener('click', () => { state.ifyPage++; renderIconifyPage(); });
 }
 
 // Collections 100% fill — compatibles specs Loxone (pas de stroke)
@@ -320,26 +318,23 @@ async function iconifySearch() {
       grid.innerHTML = '<p class="hint ify-placeholder">Aucun résultat fill-compatible trouvé.</p>';
       return;
     }
-    renderIconifyPage();
+    renderIconifyAll();
   } catch(e) {
     grid.innerHTML = `<p class="hint ify-placeholder" style="color:#E03C31">Erreur: ${e.message}</p>`;
   }
 }
 
-function renderIconifyPage() {
+function renderIconifyAll() {
   const grid = $('ify-grid');
-  const pag = $('ify-pagination');
-  const { ifyResults, ifyPage, ifyPageSize } = state;
-  const total = ifyResults.length;
-  const totalPages = Math.ceil(total / ifyPageSize);
-  const start = ifyPage * ifyPageSize;
-  const page = ifyResults.slice(start, start + ifyPageSize);
+  const countEl = $('ify-result-count');
+  const total = state.ifyResults.length;
 
   grid.innerHTML = '';
-  const frag = document.createDocumentFragment();
+  countEl.hidden = false;
+  countEl.textContent = `${total} icône${total > 1 ? 's' : ''} trouvée${total > 1 ? 's' : ''}`;
 
-  page.forEach(iconId => {
-    // iconId format : "prefix:name"
+  const frag = document.createDocumentFragment();
+  state.ifyResults.forEach(iconId => {
     const [prefix, ...rest] = iconId.split(':');
     const name = rest.join(':');
     const svgUrl = `https://api.iconify.design/${prefix}/${name}.svg`;
@@ -350,12 +345,10 @@ function renderIconifyPage() {
     item.dataset.iconId = iconId;
 
     const img = document.createElement('img');
-    // Charger directement depuis Iconify API (icônes vectorielles, noires)
     img.src = svgUrl;
     img.alt = name;
     img.loading = 'lazy';
     img.onerror = () => { img.style.opacity = '0.15'; };
-    // Grille Iconify aussi en noir — couleur uniquement sur le rendu PNG
     img.style.filter = 'none';
 
     const label = document.createElement('span');
@@ -376,16 +369,6 @@ function renderIconifyPage() {
     frag.appendChild(item);
   });
   grid.appendChild(frag);
-
-  // Pagination
-  if (totalPages > 1) {
-    pag.hidden = false;
-    $('ify-page-info').textContent = `${ifyPage + 1} / ${totalPages} (${total} icônes)`;
-    $('ify-prev').disabled = ifyPage === 0;
-    $('ify-next').disabled = ifyPage >= totalPages - 1;
-  } else {
-    pag.hidden = true;
-  }
 }
 
 async function loadIconifyIcon(prefix, name) {
