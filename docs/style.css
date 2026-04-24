@@ -232,10 +232,11 @@ header {
 }
 
 .icon-item {
-  aspect-ratio: 1;
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  gap: 3px; padding: 6px 3px;
+  gap: 2px;
+  padding: 5px 2px 4px;
+  height: 52px;
   border-radius: var(--radius-xs);
   cursor: pointer;
   border: 1px solid transparent;
@@ -253,7 +254,7 @@ header {
 }
 /* Icônes SVG Loxone sont noires — parfait sur fond clair */
 .icon-item img {
-  width: 22px; height: 22px;
+  width: 24px; height: 24px;
   object-fit: contain; pointer-events: none;
   flex-shrink: 0; display: block;
   opacity: .55;
@@ -267,9 +268,10 @@ header {
 .ify-item.selected img { opacity: 1; }
 
 .icon-label {
-  font-size: 7.5px; color: var(--text3); text-align: center;
+  font-size: 7px; color: var(--text3); text-align: center;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  width: 100%; line-height: 1.2; display: block;
+  width: 100%; line-height: 1; display: block;
+  flex-shrink: 0;
 }
 .icon-item.selected .icon-label { color: var(--lox); font-weight: 600; }
 
