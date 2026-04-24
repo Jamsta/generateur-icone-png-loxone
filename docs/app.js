@@ -520,11 +520,14 @@ function processSvg(raw, name = null) {
   state.colorSelected = false;  // Nouvelle icône chargée → prévisualisation en noir
   if (name) {
     state.currentIconName = name;
-    $('current-icon-name').textContent = name;
-    $('current-icon-name').hidden = false;
+    const nameEl = $('current-icon-name');
+    nameEl.textContent = name;
+    nameEl.classList.remove('empty');
     $('filename').value = name;
   } else {
-    $('current-icon-name').hidden = true;
+    const nameEl = $('current-icon-name');
+    nameEl.textContent = 'Aucune icône sélectionnée';
+    nameEl.classList.add('empty');
   }
   applyAndRender();
   showToast(name ? `"${name}" chargé !` : 'SVG chargé !', 'ok');
@@ -919,8 +922,10 @@ function renderHistory() {
   badge.textContent = state.history.length;
   clearBtn.hidden = state.history.length === 0;
 
+  const emptyEl = $('hist-empty');
+  if (emptyEl) emptyEl.hidden = state.history.length > 0;
+  grid.innerHTML = '';
   if (!state.history.length) {
-    grid.innerHTML = '<p class="hint">Aucune icône générée.</p>';
     return;
   }
 

@@ -8,43 +8,59 @@
 </head>
 <body>
 
+<!-- ══ HEADER ══ -->
 <header>
   <div class="logo">
-    <svg viewBox="0 0 40 40" width="32" height="32" fill="none">
-      <rect width="40" height="40" rx="9" fill="#6DBE45"/>
-      <path d="M10 28V12h5v12h10v4H10zm16-16h5v16h-5V12z" fill="white"/>
-    </svg>
-    <div>
-      <span class="logo-title">Loxone <strong>Icon Generator</strong></span>
-      <span class="logo-sub">615 icônes officielles · Iconify 275k+ · Export PNG optimisé</span>
+    <div class="logo-mark">
+      <svg viewBox="0 0 20 20" width="16" height="16" fill="none">
+        <path d="M4 14V6h3v6h6v2H4zm8-8h3v8h-3V6z" fill="white"/>
+      </svg>
+    </div>
+    <div class="logo-text">
+      <span class="logo-name">Loxone <span>Icon Generator</span></span>
+      <span class="logo-tag">615 icônes officielles · Iconify 275k+ · Export PNG</span>
     </div>
   </div>
-  <a class="gh-link" href="https://github.com/Jamsta/generateur-icone-png-loxone" target="_blank" rel="noopener">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.477 2 2 6.484 2 12.021c0 4.428 2.865 8.184 6.839 9.504.5.092.682-.217.682-.482 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844a9.59 9.59 0 012.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.021C22 6.484 17.522 2 12 2z"/></svg>
-    GitHub
-  </a>
+  <div class="header-right">
+    <a class="gh-link" href="https://github.com/Jamsta/generateur-icone-png-loxone" target="_blank" rel="noopener">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C6.477 2 2 6.484 2 12.021c0 4.428 2.865 8.184 6.839 9.504.5.092.682-.217.682-.482 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844a9.59 9.59 0 012.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.021C22 6.484 17.522 2 12 2z"/>
+      </svg>
+      GitHub
+    </a>
+  </div>
 </header>
 
-<main>
+<!-- ══ APP LAYOUT ══ -->
+<div class="app-layout">
 
-  <!-- ═══ PANNEAU GAUCHE ═══ -->
+  <!-- ════ SIDEBAR GAUCHE ════ -->
   <aside class="sidebar">
 
-    <!-- SOURCE -->
-    <div class="card">
-      <h2><i class="step">1</i> Source SVG</h2>
+    <!-- 1. SOURCE SVG -->
+    <div class="section">
+      <div class="section-title">
+        <span class="section-num">1</span>
+        Source SVG
+      </div>
+
       <div class="tabs" id="source-tabs">
-        <button class="tab active" data-tab="loxone">🏠 Loxone</button>
-        <button class="tab" data-tab="iconify">🌐 Iconify</button>
-        <button class="tab" data-tab="url">🔗 URL</button>
-        <button class="tab" data-tab="file">📁 Fichier</button>
-        <button class="tab" data-tab="code">✏️ Code</button>
+        <button class="tab active" data-tab="loxone">Loxone</button>
+        <button class="tab" data-tab="iconify">Iconify</button>
+        <button class="tab" data-tab="url">URL</button>
+        <button class="tab" data-tab="file">Fichier</button>
+        <button class="tab" data-tab="code">Code</button>
       </div>
 
       <!-- LOXONE LIBRARY -->
       <div class="tab-content active" id="tab-loxone">
-        <div class="search-box">
-          <input type="text" id="lox-search" placeholder="🔍 Rechercher parmi 615 icônes Loxone…" autocomplete="off" />
+        <div class="search-wrap">
+          <span class="icon-search">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+          </span>
+          <input type="text" id="lox-search" placeholder="Rechercher parmi 615 icônes…" autocomplete="off" />
           <span id="lox-count" class="search-count">615</span>
         </div>
         <div class="icon-grid" id="lox-grid"></div>
@@ -52,47 +68,50 @@
 
       <!-- ICONIFY -->
       <div class="tab-content" id="tab-iconify">
-        <div class="iconify-search-row">
-          <div class="search-box" style="flex:1;margin-bottom:0">
-            <input type="text" id="ify-search" placeholder="🔍 Rechercher (ex: home, alarm, lock…)" autocomplete="off" />
+        <div class="ify-search-row">
+          <div class="search-wrap" style="flex:1;margin-bottom:0">
+            <span class="icon-search">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+            </span>
+            <input type="text" id="ify-search" placeholder="home, alarm, lock…" autocomplete="off" />
           </div>
           <button class="btn btn-primary" id="btn-ify-search">Go</button>
         </div>
-        <div class="ify-filters">
-          <select id="ify-prefix">
-            <option value="">— Choisir une collection —</option>
-            <optgroup label="✅ Fill — Compatibles Loxone">
-              <option value="mdi">Material Design Icons (7 000+)</option>
-              <option value="material-symbols">Material Symbols Filled (9 000+)</option>
-              <option value="fa6-solid">Font Awesome Solid (1 400+)</option>
-              <option value="bi">Bootstrap Icons (2 000+)</option>
-              <option value="ion">Ionicons (1 300+)</option>
-              <option value="ri">Remix Icons (2 800+)</option>
-              <option value="uil">Unicons (1 200+)</option>
-              <option value="clarity">Clarity (1 100+)</option>
-              <option value="carbon">Carbon (2 000+)</option>
-              <option value="jam">Jam Icons (940+)</option>
-              <option value="fluent">Fluent UI (5 000+)</option>
-              <option value="ic">Google Icons (2 000+)</option>
-              <option value="bxs">BoxIcons Solid (800+)</option>
-              <option value="gg">css.gg (700+)</option>
-              <option value="ph">Phosphor (6 000+)</option>
-              <option value="fa6-regular">Font Awesome Regular (150+)</option>
-            </optgroup>
-            <optgroup label="〰️ Stroke — Style trait">
-              <option value="iconoir">Iconoir (1 300+)</option>
-              <option value="tabler">Tabler Icons (5 000+)</option>
-              <option value="lucide">Lucide (1 500+)</option>
-              <option value="feather">Feather (300+)</option>
-              <option value="heroicons">Heroicons (900+)</option>
-              <option value="radix-icons">Radix Icons (300+)</option>
-              <option value="majesticons">Majesticons (900+)</option>
-              <option value="mynaui">Mynaui (400+)</option>
-            </optgroup>
-          </select>
-        </div>
+        <select class="ify-select" id="ify-prefix">
+          <option value="">— Choisir une collection —</option>
+          <optgroup label="✅ Fill — Compatibles Loxone">
+            <option value="mdi">Material Design Icons (7 000+)</option>
+            <option value="material-symbols">Material Symbols (9 000+)</option>
+            <option value="fa6-solid">Font Awesome Solid (1 400+)</option>
+            <option value="bi">Bootstrap Icons (2 000+)</option>
+            <option value="ion">Ionicons (1 300+)</option>
+            <option value="ri">Remix Icons (2 800+)</option>
+            <option value="uil">Unicons (1 200+)</option>
+            <option value="clarity">Clarity (1 100+)</option>
+            <option value="carbon">Carbon (2 000+)</option>
+            <option value="jam">Jam Icons (940+)</option>
+            <option value="fluent">Fluent UI (5 000+)</option>
+            <option value="ic">Google Icons (2 000+)</option>
+            <option value="bxs">BoxIcons Solid (800+)</option>
+            <option value="gg">css.gg (700+)</option>
+            <option value="ph">Phosphor (6 000+)</option>
+            <option value="fa6-regular">Font Awesome Regular (150+)</option>
+          </optgroup>
+          <optgroup label="〰️ Stroke — Style trait">
+            <option value="iconoir">Iconoir (1 300+)</option>
+            <option value="tabler">Tabler Icons (5 000+)</option>
+            <option value="lucide">Lucide (1 500+)</option>
+            <option value="feather">Feather (300+)</option>
+            <option value="heroicons">Heroicons (900+)</option>
+            <option value="radix-icons">Radix Icons (300+)</option>
+            <option value="majesticons">Majesticons (900+)</option>
+            <option value="mynaui">Mynaui (400+)</option>
+          </optgroup>
+        </select>
         <div class="icon-grid" id="ify-grid">
-          <p class="hint ify-placeholder">Tapez un terme et appuyez sur Go…</p>
+          <p class="hint ify-placeholder">Choisissez une collection et tapez un terme…</p>
         </div>
         <div class="ify-result-count" id="ify-result-count" hidden></div>
       </div>
@@ -100,7 +119,7 @@
       <!-- URL -->
       <div class="tab-content" id="tab-url">
         <div class="input-row">
-          <input type="text" id="svg-url" placeholder="https://…/icon.svg ou URL Iconify" />
+          <input type="text" id="svg-url" placeholder="https://…/icon.svg" />
           <button class="btn btn-primary" id="btn-load-url">Charger</button>
         </div>
         <p class="hint mt8">Ex: https://api.iconify.design/mdi/home.svg</p>
@@ -111,88 +130,101 @@
         <div class="drop-zone" id="drop-zone">
           <div class="drop-icon">📂</div>
           <p>Glissez-déposez votre SVG ici</p>
-          <label class="btn btn-secondary mt8" for="file-input">Parcourir</label>
+          <label class="btn btn-ghost mt8" for="file-input" style="cursor:pointer">Parcourir</label>
           <input type="file" id="file-input" accept=".svg,image/svg+xml" hidden />
         </div>
       </div>
 
       <!-- CODE -->
       <div class="tab-content" id="tab-code">
-        <textarea id="svg-code" placeholder="<svg …>…</svg>" rows="8"></textarea>
+        <textarea id="svg-code" placeholder="<svg …>…</svg>"></textarea>
         <button class="btn btn-primary mt8 w100" id="btn-load-code">Appliquer</button>
       </div>
-    </div>
 
-    <!-- COULEURS -->
-    <div class="card">
-      <h2><i class="step">2</i> Couleur</h2>
+    </div><!-- /section source -->
 
-      <!-- Bandeau Loxone Config officiel -->
-      <div class="color-section-label">
-        <svg width="12" height="12" viewBox="0 0 40 40"><rect width="40" height="40" rx="5" fill="#6DBE45"/><path d="M8 28V12h4v12h10v4H8zm14-16h4v16h-4V12z" fill="white"/></svg>
-        Loxone Config — Palette officielle
+    <!-- 2. COULEUR -->
+    <div class="section">
+      <div class="section-title">
+        <span class="section-num">2</span>
+        Couleur de l'icône
       </div>
+
+      <!-- Palette Loxone Config officielle -->
+      <div class="palette-label">Loxone Config</div>
       <div class="loxone-palette-wrap">
         <div class="loxone-palette" id="loxone-palette"></div>
       </div>
 
       <!-- Palette étendue -->
-      <div class="color-section-label mt12">🎨 Couleurs supplémentaires</div>
+      <div class="palette-label">Autres couleurs</div>
       <div class="ext-palette" id="ext-palette"></div>
 
-      <!-- Custom -->
-      <div class="color-section-label mt12">⚙️ Couleur personnalisée</div>
+      <!-- Couleur personnalisée -->
+      <div class="palette-label">Personnalisée</div>
       <div class="custom-color-row">
         <input type="color" id="icon-color" value="#6DBE45" />
         <input type="text" id="icon-color-hex" value="#6DBE45" maxlength="9" class="hex-input" />
         <div class="opacity-group">
           <input type="range" id="icon-opacity" min="0" max="100" value="100" />
-          <span id="icon-opacity-val">100%</span>
+          <span class="opacity-val" id="icon-opacity-val">100%</span>
         </div>
       </div>
 
+      <div class="divider mt10"></div>
+
       <!-- Fond -->
-      <div class="color-section-label mt12">🖼 Fond (optionnel)</div>
+      <div class="palette-label">Fond (optionnel)</div>
       <div class="custom-color-row">
         <input type="color" id="bg-color" value="#FFFFFF" />
         <input type="text" id="bg-color-hex" value="#FFFFFF" maxlength="9" class="hex-input" />
         <div class="opacity-group">
           <input type="range" id="bg-opacity" min="0" max="100" value="0" />
-          <span id="bg-opacity-val">0%</span>
+          <span class="opacity-val" id="bg-opacity-val">0%</span>
         </div>
       </div>
-    </div>
 
-    <!-- OPTIONS -->
-    <div class="card">
-      <h2><i class="step">3</i> Options export</h2>
+    </div><!-- /section couleur -->
 
-      <div class="opt-row">
-        <label>Marge intérieure</label>
-        <div class="slider-row">
+    <!-- 3. OPTIONS EXPORT -->
+    <div class="section">
+      <div class="section-title">
+        <span class="section-num">3</span>
+        Options export
+      </div>
+
+      <div class="opt-item">
+        <div class="opt-label">
+          Marge intérieure
+          <span class="opt-label-val" id="padding-val">0%</span>
+        </div>
+        <div class="slider-track">
           <input type="range" id="padding" min="0" max="40" value="0" />
-          <span id="padding-val">0%</span>
         </div>
       </div>
 
-      <div class="opt-row">
-        <label>Arrondi fond</label>
-        <div class="slider-row">
+      <div class="opt-item">
+        <div class="opt-label">
+          Arrondi fond
+          <span class="opt-label-val" id="corner-val">0%</span>
+        </div>
+        <div class="slider-track">
           <input type="range" id="corner-radius" min="0" max="50" value="0" />
-          <span id="corner-val">0%</span>
         </div>
       </div>
 
-      <div class="opt-row">
-        <label>Rotation</label>
-        <div class="slider-row">
+      <div class="opt-item">
+        <div class="opt-label">
+          Rotation
+          <span class="opt-label-val" id="rotation-val">0°</span>
+        </div>
+        <div class="slider-track">
           <input type="range" id="rotation" min="0" max="360" value="0" />
-          <span id="rotation-val">0°</span>
         </div>
       </div>
 
-      <div class="opt-row">
-        <label>Tailles PNG</label>
+      <div class="opt-item">
+        <div class="opt-label">Tailles PNG</div>
         <div class="size-grid">
           <label class="size-check"><input type="checkbox" name="size" value="24" /> 24</label>
           <label class="size-check"><input type="checkbox" name="size" value="36" /> 36</label>
@@ -203,91 +235,108 @@
           <label class="size-check"><input type="checkbox" name="size" value="256" /> 256</label>
           <label class="size-check"><input type="checkbox" name="size" value="512" /> 512</label>
         </div>
-        <p class="hint mt4">💡 Loxone utilise principalement 48×48 et 128×128 px</p>
+        <p class="hint mt8">Loxone utilise principalement 48 × 48 et 128 × 128 px</p>
       </div>
 
-      <div class="opt-row">
-        <label>Nom fichier</label>
+      <div class="opt-item">
+        <div class="opt-label">Nom fichier</div>
         <input type="text" id="filename" value="icon" placeholder="nom-icone" />
       </div>
-    </div>
+
+    </div><!-- /section options -->
 
   </aside>
 
-  <!-- ═══ ZONE CENTRALE ═══ -->
-  <section class="center">
+  <!-- ════ ZONE CENTRALE ════ -->
+  <div class="content">
 
-    <!-- Prévisualisation -->
+    <!-- PREVIEW -->
     <div class="card preview-card">
-      <div class="preview-header">
-        <h2>Prévisualisation</h2>
+      <div class="preview-toolbar">
+        <span class="preview-icon-name empty" id="current-icon-name">Aucune icône sélectionnée</span>
         <div class="bg-switcher">
-          <button class="bg-btn active" data-bg="#F0F2F5" title="Clair">☀️</button>
-          <button class="bg-btn" data-bg="#1E2420" title="Sombre">🌙</button>
-          <button class="bg-btn" data-bg="#6DBE45" title="Loxone vert">🟢</button>
-          <button class="bg-btn" data-bg="checker" title="Transparent">⬜</button>
+          <button class="bg-btn active" data-bg="#1a1e19" title="Sombre">◐</button>
+          <button class="bg-btn" data-bg="#f4f4f2" title="Clair">○</button>
+          <button class="bg-btn" data-bg="#6DBE45" title="Loxone">●</button>
+          <button class="bg-btn" data-bg="checker" title="Transparent">⊞</button>
         </div>
       </div>
 
-      <div class="preview-stage" id="preview-stage">
-        <div class="preview-empty" id="preview-empty">
-          <div class="empty-icon">🖼️</div>
-          <p>Sélectionnez une icône ou chargez un SVG</p>
+      <div class="preview-main">
+        <div class="preview-stage" id="preview-stage">
+          <div class="preview-empty" id="preview-empty">
+            <div class="preview-empty-icon">⬚</div>
+            <p>Sélectionnez une icône<br>ou chargez un SVG</p>
+          </div>
+          <canvas id="preview-canvas" hidden></canvas>
         </div>
-        <canvas id="preview-canvas" hidden></canvas>
       </div>
 
       <div class="mini-strip" id="mini-strip" hidden>
         <div class="mini-item">
           <canvas id="mini-48" width="48" height="48"></canvas>
-          <span>48px</span>
+          <span class="mini-item-label">48px</span>
         </div>
         <div class="mini-item">
           <canvas id="mini-64" width="64" height="64"></canvas>
-          <span>64px</span>
+          <span class="mini-item-label">64px</span>
         </div>
         <div class="mini-item">
           <canvas id="mini-128" width="128" height="128"></canvas>
-          <span>128px</span>
+          <span class="mini-item-label">128px</span>
         </div>
       </div>
-
-      <div class="current-icon-name" id="current-icon-name" hidden></div>
     </div>
 
-    <!-- Export -->
+    <!-- EXPORT -->
     <div class="card export-card">
-      <h2>Export PNG</h2>
-      <div class="export-info" id="export-info">
-        <span id="sizes-label">3 taille(s) sélectionnée(s)</span>
-        <span class="sep">·</span>
-        <span>PNG 32-bit + transparence</span>
+      <div class="card-header">
+        <span class="card-title">Export PNG</span>
       </div>
-      <div class="export-btns">
-        <button class="btn btn-export" id="btn-export-single">⬇ Télécharger (128px)</button>
-        <button class="btn btn-export-zip" id="btn-export-all">📦 Télécharger ZIP</button>
-      </div>
-      <div class="export-opts">
-        <label class="toggle"><input type="checkbox" id="opt-lox-names" checked /> Nommage Loxone (icon_48x48.png)</label>
-        <label class="toggle"><input type="checkbox" id="opt-svg" /> Inclure SVG colorisé dans le ZIP</label>
-        <label class="toggle"><input type="checkbox" id="opt-transparent" checked /> Fond transparent si opacité = 0%</label>
+      <div class="card-body">
+        <div class="export-meta">
+          <span id="sizes-label">3 taille(s) sélectionnée(s)</span>
+          <span class="meta-dot"></span>
+          <span>PNG 32-bit · transparence</span>
+        </div>
+        <div class="export-btns">
+          <button class="btn-export-primary" id="btn-export-single">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Télécharger (128px)
+          </button>
+          <button class="btn-export-secondary" id="btn-export-all">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+            ZIP toutes tailles
+          </button>
+        </div>
+        <div class="export-opts">
+          <label class="toggle"><input type="checkbox" id="opt-lox-names" checked /> Nommage Loxone (icon_48x48.png)</label>
+          <label class="toggle"><input type="checkbox" id="opt-svg" /> Inclure SVG colorisé dans le ZIP</label>
+          <label class="toggle"><input type="checkbox" id="opt-transparent" checked /> Fond transparent si opacité = 0%</label>
+        </div>
       </div>
     </div>
 
-    <!-- Historique -->
+    <!-- HISTORIQUE -->
     <div class="card">
-      <div class="history-header">
-        <h2>Historique <span class="badge" id="hist-count">0</span></h2>
-        <button class="btn-text-danger" id="btn-clear-hist" hidden>Vider</button>
+      <div class="card-header">
+        <div class="history-head">
+          <div class="history-title-row">
+            <span class="card-title">Historique</span>
+            <span class="badge" id="hist-count">0</span>
+          </div>
+          <button class="btn-danger-text" id="btn-clear-hist" hidden>Vider</button>
+        </div>
       </div>
-      <div class="history-grid" id="history-grid">
-        <p class="hint" id="hist-empty">Aucune icône générée.</p>
+      <div class="card-body">
+        <p class="hist-empty hint" id="hist-empty">Aucune icône générée.</p>
+        <div class="history-grid" id="history-grid"></div>
       </div>
     </div>
 
-  </section>
+  </div><!-- /content -->
 
-</main>
+</div><!-- /app-layout -->
 
 <div class="toast" id="toast"></div>
 <canvas id="render-canvas" hidden></canvas>
