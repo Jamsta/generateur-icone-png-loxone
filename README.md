@@ -1,64 +1,59 @@
-# 🟢 Loxone Icon Generator
+# Loxone Icon Generator
 
-> Générateur d'icônes PNG optimisé pour **Loxone Config** — 615 icônes officielles + collections fill-only via Iconify.
+> Générateur d'icônes PNG optimisé pour **Loxone Config** — 615 icônes officielles + 275 000+ icônes via Iconify.
 
-🌐 **Application en ligne** : [jamsta.github.io/generateur-icone-png-loxone](https://jamsta.github.io/generateur-icone-png-loxone/)  
-📦 **Dépôt GitHub** : [github.com/Jamsta/generateur-icone-png-loxone](https://github.com/Jamsta/generateur-icone-png-loxone)
+🌐 **Application** : [jamsta.github.io/generateur-icone-png-loxone](https://jamsta.github.io/generateur-icone-png-loxone/)  
+📦 **GitHub** : [github.com/Jamsta/generateur-icone-png-loxone](https://github.com/Jamsta/generateur-icone-png-loxone)
 
 ---
 
-## ✨ Fonctionnalités
+## Fonctionnalités
 
-### 📚 Sources d'icônes
+### Sources d'icônes
 
-#### 🏠 Bibliothèque Loxone officielle
+#### Bibliothèque Loxone officielle
 - **615 icônes SVG** officielles Loxone (v20260217)
-- Recherche en temps réel
-- Scroll vertical fluide, 5 icônes par ligne
-- Icônes affichées en **noir** dans la grille
+- Recherche en temps réel, 5 icônes par ligne, scroll vertical
 
-#### 🌐 Iconify — Collections fill-only
-Accès aux collections **uniquement fill** (conformes aux specs Loxone) :
+#### Iconify — 275 000+ icônes
+Accès à toutes les collections Iconify, organisées en deux groupes :
+
+**Fill — Compatibles Loxone** (recommandé)
 
 | Collection | Icônes |
 |---|---|
-| Material Symbols Filled | 9 000+ |
+| Material Symbols | 9 000+ |
 | Material Design Icons | 7 000+ |
-| Fluent UI Filled | 5 000+ |
-| Remix Icons Filled | 2 800+ |
-| Bootstrap Icons Filled | 2 000+ |
+| Phosphor | 6 000+ |
+| Fluent UI | 5 000+ |
+| Remix Icons | 2 800+ |
+| Bootstrap Icons | 2 000+ |
 | Carbon | 2 000+ |
-| Ionicons Filled | 1 300+ |
+| Google Icons | 2 000+ |
 | Font Awesome Solid | 1 400+ |
-| Clarity Solid | 1 100+ |
+| Ionicons | 1 300+ |
+| Clarity | 1 100+ |
 | Unicons | 1 200+ |
 | Jam Icons | 940+ |
 | BoxIcons Solid | 800+ |
+| css.gg | 700+ |
 
-> ⚠️ Les collections **stroke** (Tabler, Feather, Lucide…) sont volontairement exclues car non conformes au format Loxone (`fill` uniquement, pas de `stroke`).
+**Stroke — Style trait** (Iconoir, Tabler, Lucide, Feather, Heroicons…)
 
-- Recherche par terme dans la collection choisie
-- Résultats affichés en **noir** dans la grille (fill forcé via l'API)
-- Tous les résultats affichés à la suite avec scroll vertical (pas de pagination)
+- Résultats affichés à la suite avec scroll vertical (pas de pagination)
 - Compteur de résultats
 
-#### 🔗 URL directe
-- Chargement depuis n'importe quelle URL SVG
-- Proxy CORS automatique si nécessaire
-- Compatible avec les URLs Iconify : `https://api.iconify.design/{prefix}/{name}.svg`
-
-#### 📁 Import fichier
-- Glisser-déposer ou sélection fichier SVG local
-
-#### ✏️ Code SVG
-- Coller directement du code SVG brut
+#### Autres sources
+- **URL directe** — n'importe quelle URL SVG (proxy CORS automatique)
+- **Fichier local** — glisser-déposer ou sélection
+- **Code SVG** — coller du code SVG brut
 
 ---
 
-### 🎨 Couleurs
+### Couleurs
 
 #### Palette Loxone Config officielle
-Les **9 couleurs exactes** du sélecteur Loxone Config, affichées sur fond sombre comme dans l'interface Loxone :
+Les **9 couleurs exactes** du sélecteur Loxone Config, affichées sur bandeau sombre :
 
 | Couleur | Hex |
 |---|---|
@@ -72,41 +67,37 @@ Les **9 couleurs exactes** du sélecteur Loxone Config, affichées sur fond somb
 | Bleu | `#2D8BFF` |
 | Gris | `#888888` |
 
-#### 21 couleurs supplémentaires
-Blanc, gris, verts Loxone, oranges, rouges, bleus, violets, brun…
-
-#### Couleur personnalisée
-- Sélecteur de couleur natif
-- Saisie hexadécimale directe
+#### Autres couleurs
+- 21 couleurs supplémentaires (blancs, gris, verts, rouges, bleus, violets…)
+- Sélecteur de couleur personnalisé + saisie hexadécimale
 - Opacité de l'icône (0–100%)
 
-#### Fond optionnel
-- Couleur + opacité + arrondi des coins
-
 ---
 
-### 🖼️ Prévisualisation
-- **Icône toujours affichée en noir** dans la prévisualisation
-- La couleur choisie s'applique **uniquement à l'export PNG**
+### Prévisualisation
+
+- Icône affichée en **noir** au chargement (état neutre)
+- Couleur visible dans la prévisualisation **dès qu'une couleur est sélectionnée**
 - Canvas haute résolution 256px
 - Mini-aperçus en 48, 64 et 128px
-- 4 fonds : clair ☀️, sombre 🌙, vert Loxone 🟢, damier transparent ⬜
+- 4 fonds : clair, sombre, vert Loxone, damier (transparent)
+- Colorisation correcte des icônes **fill ET stroke** (Iconify fill et stroke-only)
 
 ---
 
-### ⚙️ Options d'export
+### Options d'export
+
 | Option | Valeurs |
 |---|---|
 | Tailles PNG | 24, 36, 48, 64, 96, 128, 256, 512 px |
-| Tailles Loxone | **48×48** et **128×128** (présélectionnées) |
+| Présélection Loxone | 48×48 et 128×128 |
 | Marge intérieure | 0–40% |
 | Arrondi fond | 0–50% |
 | Rotation | 0–360° |
 | Nommage | `icon_48x48.png` (format Loxone) |
 
----
+### Export
 
-### 📦 Export
 - **PNG individuel** — taille la plus grande sélectionnée
 - **ZIP multi-tailles** — toutes les tailles en un téléchargement
 - **Fond transparent** par défaut (PNG 32-bit)
@@ -115,49 +106,47 @@ Blanc, gris, verts Loxone, oranges, rouges, bleus, violets, brun…
 
 ---
 
-## 🏗️ Specs techniques Loxone respectées
+## Specs techniques Loxone
 
 | Propriété | Valeur |
 |---|---|
 | ViewBox | `0 0 24 24` |
-| Fill paths | `black` → remplacé par la couleur à l'export |
-| Fill découpes | `none` → **préservé** (trous internes) |
-| Fill blanc | → **préservé** (découpes visuelles) |
-| currentColor | → normalisé en `black` avant traitement |
-| fill-rule | `evenodd` |
-| clip-rule | `evenodd` |
+| Fill paths | `black` → remplacé par la couleur choisie |
+| Fill découpes | `none` → préservé (trous internes) |
+| Stroke | colorisé comme le fill |
+| `currentColor` | normalisé en `black` avant traitement |
 | Fond export | transparent par défaut |
 | Format | PNG 32-bit |
 | Tailles cibles | 48×48 et 128×128 px |
 
 ---
 
-## 🛠️ Stack technique
+## Stack technique
 
 - **HTML / CSS / JavaScript** — vanilla, aucun framework
 - **Canvas API** — rendu PNG natif haute qualité
-- **JSZip** — génération ZIP côté client (offline)
+- **JSZip** — génération ZIP côté client
 - **Iconify API** — `https://api.iconify.design` (public, sans clé API)
-- **GitHub Pages** — hébergement statique gratuit
+- **GitHub Pages** — hébergement statique
 
 ---
 
-## 📁 Structure du projet
+## Structure du projet
 
 ```
 /
-├── index.html          # Interface principale
-├── app.js              # Logique (Iconify, colorisation, export PNG)
-├── style.css           # Styles
-├── icons-data.js       # Liste des 615 noms d'icônes Loxone
-├── icons/              # 615 fichiers SVG Loxone officiels (v20260217)
-├── jszip.min.js        # Bibliothèque ZIP (locale, offline)
-└── docs/               # Copie miroir pour GitHub Pages
+├── index.html        # Interface principale
+├── app.js            # Logique (Iconify, colorisation, export PNG)
+├── style.css         # Styles
+├── icons-data.js     # Liste des 615 noms d'icônes Loxone
+├── icons/            # 615 fichiers SVG Loxone officiels
+├── jszip.min.js      # Bibliothèque ZIP (offline)
+└── docs/             # Copie miroir pour GitHub Pages
 ```
 
 ---
 
-## 🚀 Utilisation locale
+## Utilisation locale
 
 ```bash
 git clone https://github.com/Jamsta/generateur-icone-png-loxone.git
@@ -168,7 +157,7 @@ python3 -m http.server 3000
 
 ---
 
-## 📄 Licences
+## Licences
 
 - **Icônes Loxone** : © Loxone Electronics GmbH
 - **Icônes Iconify** : licences variées selon la collection (Apache 2.0, MIT, OFL…)
