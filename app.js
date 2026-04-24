@@ -63,6 +63,7 @@ const state = {
   rotation: 0,
   previewBg: '#F0F2F5',
   currentIconName: null,
+  colorSelected: false,  // false = noir au 1er chargement, true = couleur choisie
   history: [],
   // Iconify
   ifyResults: [],
@@ -137,9 +138,9 @@ function buildExtPalette() {
 
 function setIconColor(hex) {
   state.iconColor = hex;
+  state.colorSelected = true;  // L'utilisateur a choisi une couleur → afficher dans la prévisualisation
   $('icon-color').value = hex;
   $('icon-color-hex').value = hex.toUpperCase();
-  // Les icônes dans la grille restent en NOIR — couleur appliquée uniquement au rendu PNG
   applyAndRender();
 }
 
@@ -530,9 +531,9 @@ function processSvg(raw, name = null) {
     return showToast('SVG invalide', 'err');
   }
   // Normaliser currentColor → black avant stockage
-  // Les SVG Iconify utilisent currentColor qui hérite du CSS parent (vert)
   svg = normalizeSvgToBlack(svg);
   state.svgRaw = svg;
+  state.colorSelected = false;  // Nouvelle icône chargée → prévisualisation en noir
   if (name) {
     state.currentIconName = name;
     $('current-icon-name').textContent = name;
@@ -565,8 +566,8 @@ function initDropZone() {
 function initColorInputs() {
   syncColor($('icon-color'), $('icon-color-hex'), val => {
     state.iconColor = val;
+    state.colorSelected = true;  // Saisie manuelle = couleur choisie
     syncPaletteActive(val);
-    // Grille reste en noir — pas de filtre sur les imgs
     applyAndRender();
   });
   syncColor($('bg-color'), $('bg-color-hex'), val => { state.bgColor = val; applyAndRender(); });
@@ -706,17 +707,18 @@ function coloriseSvg(svgString, color, opacity) {
 // ════════════════════════════════════════════
 function applyAndRender() {
   if (!state.svgRaw) return;
-  // svgColored = version colorisée pour l'export
+  // svgColored = version colorisée (couleur choisie) pour l'export ET la prévisualisation
   state.svgColored = coloriseSvg(state.svgRaw, state.iconColor, state.iconOpacity);
-  // svgPreview = toujours en noir pour la prévisualisation
-  state.svgPreview = coloriseSvg(state.svgRaw, '#000000', state.iconOpacity);
+  // svgPreview = noir uniquement au 1er chargement (avant toute sélection de couleur)
+  state.svgPreview = state.colorSelected
+    ? state.svgColored
+    : coloriseSvg(state.svgRaw, '#000000', state.iconOpacity);
   renderAll();
 }
 
 async function renderAll() {
   if (!state.svgRaw) return;
   try {
-    // Prévisualisation toujours en NOIR
     await renderToCanvas($('preview-canvas'), 256, true);
     $('preview-empty').hidden = true;
     $('preview-canvas').hidden = false;
