@@ -18,7 +18,7 @@
 #### Iconify — 275 000+ icônes
 Deux groupes de collections :
 
-**Fill — Compatibles Loxone** (recommandé)
+**Fill **
 
 | Collection | Icônes |
 |---|---|
