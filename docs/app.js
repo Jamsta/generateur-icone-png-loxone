@@ -706,20 +706,24 @@ function coloriseSvg(svgString, color, opacity) {
 // ════════════════════════════════════════════
 function applyAndRender() {
   if (!state.svgRaw) return;
+  // svgColored = version colorisée pour l'export
   state.svgColored = coloriseSvg(state.svgRaw, state.iconColor, state.iconOpacity);
+  // svgPreview = toujours en noir pour la prévisualisation
+  state.svgPreview = coloriseSvg(state.svgRaw, '#000000', state.iconOpacity);
   renderAll();
 }
 
 async function renderAll() {
   if (!state.svgRaw) return;
   try {
-    await renderToCanvas($('preview-canvas'), 256);
+    // Prévisualisation toujours en NOIR
+    await renderToCanvas($('preview-canvas'), 256, true);
     $('preview-empty').hidden = true;
     $('preview-canvas').hidden = false;
     $('mini-strip').hidden = false;
-    await renderToCanvas($('mini-48'), 48);
-    await renderToCanvas($('mini-64'), 64);
-    await renderToCanvas($('mini-128'), 128);
+    await renderToCanvas($('mini-48'),  48,  true);
+    await renderToCanvas($('mini-64'),  64,  true);
+    await renderToCanvas($('mini-128'), 128, true);
     showLoading(false);
   } catch(e) {
     showLoading(false);
@@ -728,7 +732,8 @@ async function renderAll() {
 }
 
 // ─── MOTEUR DE RENDU CANVAS ──────────────────
-async function renderToCanvas(canvas, size) {
+// preview=true → noir (prévisualisation)  |  preview=false → couleur choisie (export)
+async function renderToCanvas(canvas, size, preview = false) {
   const ctx = canvas.getContext('2d');
   canvas.width = size;
   canvas.height = size;
@@ -750,7 +755,10 @@ async function renderToCanvas(canvas, size) {
     ctx.restore();
   }
 
-  const svg = state.svgColored || state.svgRaw;
+  // Choisir le SVG selon le mode
+  const svg = preview
+    ? (state.svgPreview || state.svgRaw)
+    : (state.svgColored || state.svgRaw);
   if (!svg) return;
 
   const pad = Math.round((state.padding / 100) * size);
@@ -840,7 +848,7 @@ async function exportSingle() {
   if (!sizes.length) return showToast('Sélectionnez au moins une taille', 'err');
   const size = sizes[sizes.length - 1];
   const canvas = $('render-canvas');
-  await renderToCanvas(canvas, size);
+  await renderToCanvas(canvas, size, false); // false = couleur choisie pour l'export
   const fname = buildFilename(size);
   dlCanvas(canvas, fname);
   addToHistory(canvas, fname, size);
@@ -860,7 +868,7 @@ async function exportZip() {
   const inclSvg = $('opt-svg').checked;
 
   for (const size of sizes) {
-    await renderToCanvas(canvas, size);
+    await renderToCanvas(canvas, size, false); // false = couleur choisie pour l'export
     const blob = await canvasBlob(canvas);
     const name = useLoxNames ? loxFilename(size) : buildFilename(size);
     zip.file(name + '.png', blob);
@@ -877,7 +885,7 @@ async function exportZip() {
   a.click();
   URL.revokeObjectURL(a.href);
 
-  await renderToCanvas(canvas, sizes[sizes.length - 1]);
+  await renderToCanvas(canvas, sizes[sizes.length - 1], false);
   addToHistory(canvas, buildFilename(sizes[sizes.length - 1]), sizes[sizes.length - 1]);
 
   showToast(`ZIP (${sizes.length} taille${sizes.length > 1 ? 's' : ''}) téléchargé !`, 'ok');
