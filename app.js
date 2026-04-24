@@ -281,29 +281,11 @@ function initIconify() {
   $('ify-search').addEventListener('keydown', e => { if (e.key === 'Enter') iconifySearch(); });
 }
 
-// Map collection -> filtre de noms à exclure (outline, regular, etc.)
-// Seules les variantes "filled" sont conformes aux specs Loxone
-const FILL_COLLECTIONS = {
-  'mdi':              name => !name.includes('-outline') && !name.includes('-off'),
-  'material-symbols': name => !name.includes('-outline') && !name.includes('_outlined'),
-  'fa6-solid':        () => true,
-  'bi':               name => !name.includes('-outline') && !name.includes('-slash'),
-  'ion':              name => !name.includes('-outline') && !name.includes('-sharp'),
-  'ri':               name => name.endsWith('-fill') || name.endsWith('-line') ? name.endsWith('-fill') : true,
-  'uil':              () => true,
-  'clarity':          name => name.endsWith('-solid'),
-  'carbon':           () => true,
-  'jam':              () => true,
-  'fluent':           name => name.includes('-filled'),
-  'ic':               name => name.startsWith('baseline-') || name.startsWith('round-') || name.startsWith('sharp-'),
-  'bxs':              () => true,
-};
-
 async function iconifySearch() {
   const query = $('ify-search').value.trim();
   const prefix = $('ify-prefix').value;
   if (!query) return showToast('Entrez un terme de recherche', 'err');
-  if (!prefix) return showToast('Choisissez une collection fill-compatible', 'err');
+  if (!prefix) return showToast('Choisissez une collection', 'err');
 
   state.ifyQuery = query;
   state.ifyPrefix = prefix;
@@ -313,23 +295,25 @@ async function iconifySearch() {
   $('ify-result-count').hidden = true;
 
   try {
-    // Recherche globale sans restriction prefixes (certaines collections ne répondent pas à ce paramètre)
-    const url = `https://api.iconify.design/search?query=${encodeURIComponent(query)}&limit=999`;
+    // Recherche dans la collection choisie sans aucun filtre de variante
+    const url = `https://api.iconify.design/search?query=${encodeURIComponent(query)}&limit=999&prefixes=${prefix}`;
     const res = await fetch(url);
     if (!res.ok) throw new Error('API Iconify indisponible');
     const data = await res.json();
 
-    const filterFn = FILL_COLLECTIONS[prefix] || (() => true);
-
-    // Filtrer par collection choisie + variantes fill uniquement
-    state.ifyResults = (data.icons || []).filter(id => {
-      const [col, ...rest] = id.split(':');
-      const name = rest.join(':');
-      return col === prefix && filterFn(name);
-    });
+    // Garder uniquement les résultats de la collection choisie
+    state.ifyResults = (data.icons || []).filter(id => id.startsWith(prefix + ':'));
 
     if (!state.ifyResults.length) {
-      grid.innerHTML = '<p class="hint ify-placeholder">Aucun résultat trouvé dans cette collection.<br><small>Essayez un autre terme ou une autre collection.</small></p>';
+      // Fallback : recherche globale puis filtre
+      const url2 = `https://api.iconify.design/search?query=${encodeURIComponent(query)}&limit=999`;
+      const res2 = await fetch(url2);
+      const data2 = await res2.json();
+      state.ifyResults = (data2.icons || []).filter(id => id.startsWith(prefix + ':'));
+    }
+
+    if (!state.ifyResults.length) {
+      grid.innerHTML = '<p class="hint ify-placeholder">Aucun résultat trouvé.<br><small>Essayez un autre terme.</small></p>';
       return;
     }
     renderIconifyAll();
