@@ -1,6 +1,6 @@
 # Loxone Icon Generator
 
-> Générateur d'icônes PNG optimisé pour **Loxone Config** — 615 icônes officielles + 275 000+ icônes via Iconify + **génération IA via Google Gemini**.
+> Générateur d'icônes PNG optimisé pour **Loxone Config** — 615 icônes officielles + 275 000+ icônes via Iconify.
 
 🌐 **Application** : [jamsta.github.io/generateur-icone-png-loxone](https://jamsta.github.io/generateur-icone-png-loxone/)  
 📦 **GitHub** : [github.com/Jamsta/generateur-icone-png-loxone](https://github.com/Jamsta/generateur-icone-png-loxone)
@@ -46,27 +46,19 @@ Accès à toutes les collections Iconify, organisées en deux groupes :
 - Chargement par lots de 80 avec scroll infini (IntersectionObserver)
 - Cache des collections pour rechargement instantané
 
-#### 3. ✦ Génération IA — Google Gemini
-Génère une icône SVG fill sur mesure à partir d'une description textuelle.
-
-- **Modèle** : Google Gemini 2.5 Flash (gratuit sur [aistudio.google.com](https://aistudio.google.com/apikey))
-- **Clé API** stockée uniquement dans le navigateur (localStorage), jamais transmise ailleurs
-- **Styles** : Fill solid, Outline creux, Formes arrondies
-- **Sélecteur de modèle** : Gemini 2.5 Flash / 2.0 Flash-Lite / 1.5 Flash
-- SVG généré conforme aux specs Loxone : `viewBox="0 0 24 24"`, fill only, pas de stroke
-- Aperçu immédiat + bouton "Utiliser" pour charger dans le générateur
-
-#### 4. Autres sources
+#### 3. Autres sources
 - **URL directe** — n'importe quelle URL SVG (proxy CORS automatique)
 - **Fichier local** — glisser-déposer ou sélection
 - **Code SVG** — coller du code SVG brut
+
+> 💡 **Tip IA** : Pour générer un SVG personnalisé, utilisez un outil IA (ChatGPT, Gemini, Claude…) en lui demandant de créer un SVG `viewBox="0 0 24 24"` fill-only. Copiez ensuite le code SVG dans l'onglet **Code** du générateur.
 
 ---
 
 ### Couleurs
 
 #### Palette Loxone Config officielle
-Les **9 couleurs exactes** du sélecteur Loxone Config, affichées sur bandeau sombre :
+Les **9 couleurs exactes** du sélecteur Loxone Config :
 
 | Couleur | Hex |
 |---|---|
@@ -121,40 +113,6 @@ Les **9 couleurs exactes** du sélecteur Loxone Config, affichées sur bandeau s
 
 ---
 
-## Génération IA — Guide rapide
-
-### Obtenir une clé Gemini gratuite
-
-1. Aller sur [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
-2. Cliquer **"Create API key"** → **"Create new project"** (nouveau projet = Free Tier activé)
-3. Copier la clé `AIza…`
-4. La coller dans l'onglet **✦ IA** du générateur → **"Sauver"**
-
-### Exemples de descriptions efficaces
-
-```
-ventilateur de plafond
-ampoule avec un éclair à l'intérieur
-robinet d'eau avec gouttes
-cadenas ouvert avec anneau
-volet roulant à lamelles
-prise électrique murale
-thermomètre avec flèche vers le haut
-maison avec cheminée et fumée
-```
-
-### Modèles disponibles
-
-| Modèle | Usage |
-|---|---|
-| `gemini-2.5-flash` | Recommandé — meilleur rapport qualité/quota |
-| `gemini-2.0-flash-lite` | Plus rapide, quota différent |
-| `gemini-1.5-flash` | Fallback si les autres sont saturés |
-
-> **Quota dépassé ?** Crée une nouvelle clé dans un **nouveau projet Google** sur AI Studio — les anciens projets peuvent avoir le Free Tier à `limit: 0`.
-
----
-
 ## Specs techniques Loxone
 
 | Propriété | Valeur |
@@ -176,7 +134,6 @@ maison avec cheminée et fumée
 - **Canvas API** — rendu PNG natif haute qualité
 - **JSZip** — génération ZIP côté client
 - **Iconify API** — `https://api.iconify.design` (public, sans clé)
-- **Google Gemini API** — `https://generativelanguage.googleapis.com/v1beta` (clé utilisateur)
 - **GitHub Pages** — hébergement statique
 
 ---
@@ -186,12 +143,11 @@ maison avec cheminée et fumée
 ```
 /
 ├── index.html        # Interface principale
-├── app.js            # Logique (Iconify, colorisation, export PNG, IA Gemini)
-├── style.css         # Styles (thème clair pastel, onglet IA)
+├── app.js            # Logique (Iconify, colorisation, export PNG)
+├── style.css         # Styles (thème clair pastel)
 ├── icons-data.js     # Liste des 615 noms d'icônes Loxone
 ├── icons/            # 615 fichiers SVG Loxone officiels
 ├── jszip.min.js      # Bibliothèque ZIP (offline)
-├── api-proxy.js      # Proxy Node.js local (non utilisé en prod)
 └── docs/             # Copie miroir pour GitHub Pages
 ```
 
