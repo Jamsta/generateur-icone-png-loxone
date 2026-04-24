@@ -90,6 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initExport();
   initHistory();
   initIconify();
+  initAI();
   updateSizeLabel();
   // Sélectionner le vert Loxone par défaut
   $$('.lox-color-btn')[0]?.classList.add('active');
@@ -1060,3 +1061,198 @@ function showToast(msg, type = 'ok') {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
 }
+
+// ════════════════════════════════════════════
+// ONGLET IA — GÉNÉRATION SVG VIA GPT-4o
+// Clé API saisie par l'utilisateur, stockée localStorage
+// Compatible : OpenAI (api.openai.com) et Genspark (genspark.ai/api/llm_proxy/v1)
+// ════════════════════════════════════════════
+
+const AI_OPENAI_URL   = 'https://api.openai.com/v1/chat/completions';
+const AI_GENSPARK_URL = 'https://www.genspark.ai/api/llm_proxy/v1/chat/completions';
+
+// Prompt système : génère des SVG fill conformes Loxone
+const AI_SYSTEM_PROMPT = `You are an SVG icon designer specialized in Loxone Config icons.
+
+STRICT RULES — follow exactly:
+1. Output ONLY raw SVG code. No markdown, no \`\`\`, no explanation, no comments.
+2. Must have viewBox="0 0 24 24" and xmlns="http://www.w3.org/2000/svg".
+3. FILL ONLY style: use fill="black" on all shapes. NO stroke attributes at all.
+4. fill="none" ONLY for cutouts/holes inside shapes (e.g., ring interior).
+5. Use fill-rule="evenodd" for shapes with holes.
+6. Simple, readable silhouette at 24×24px and 48×48px.
+7. No text, no gradient, no filter, no mask, no complex clipPath.
+8. Use simple elements: path, circle, rect, polygon.
+9. Start directly with <svg and end with </svg>.
+10. The icon must look like an official Loxone Config icon: clean, minimal, professional.`;
+
+function getAiStyleInstruction(style) {
+  switch (style) {
+    case 'outline':
+      return 'Use fill-rule="evenodd" to create hollow/outline shapes. The icon should appear as an outline silhouette, not a solid shape. Create the outer shape and subtract the inner area using compound paths.';
+    case 'rounded':
+      return 'Use rounded corners and soft organic shapes. Prefer rounded rectangles and smooth bezier curves. The icon should feel modern and friendly.';
+    default:
+      return 'Use solid filled shapes (fill="black"). The icon should be a clean, solid silhouette with no outlines or strokes.';
+  }
+}
+
+const AI_LS_KEY = 'lox_ai_apikey';
+let _aiLastSvg = null;
+
+function initAI() {
+  // Restaurer la clé sauvegardée
+  const saved = localStorage.getItem(AI_LS_KEY) || '';
+  if (saved) {
+    $('ai-api-key').value = saved;
+    aiShowKeyStatus(true);
+  }
+
+  $('btn-ai-save-key').addEventListener('click', () => {
+    const key = $('ai-api-key').value.trim();
+    if (!key) {
+      localStorage.removeItem(AI_LS_KEY);
+      aiShowKeyStatus(false);
+      showToast('Clé supprimée', 'info');
+      return;
+    }
+    localStorage.setItem(AI_LS_KEY, key);
+    aiShowKeyStatus(true);
+    showToast('Clé API sauvegardée ✓', 'ok');
+  });
+
+  $('btn-ai-generate').addEventListener('click', aiGenerate);
+
+  $('ai-prompt').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) aiGenerate();
+  });
+
+  $('btn-ai-regen').addEventListener('click', aiGenerate);
+  $('btn-ai-use').addEventListener('click', aiUseIcon);
+}
+
+function aiShowKeyStatus(hasKey) {
+  const block = $('ai-key-block');
+  if (hasKey) {
+    block.classList.add('ai-key-saved');
+  } else {
+    block.classList.remove('ai-key-saved');
+  }
+}
+
+function aiGetKey() {
+  return $('ai-api-key').value.trim() || localStorage.getItem(AI_LS_KEY) || '';
+}
+
+function aiGetEndpoint(key) {
+  // Genspark keys start differently from OpenAI sk-
+  if (key.startsWith('sk-')) return AI_OPENAI_URL;
+  return AI_GENSPARK_URL;
+}
+
+async function aiGenerate() {
+  const apiKey = aiGetKey();
+  if (!apiKey) {
+    showToast('Entrez votre clé API d\'abord', 'err');
+    $('ai-api-key').focus();
+    return;
+  }
+
+  const prompt = $('ai-prompt').value.trim();
+  if (!prompt) return showToast('Décris l\'icône à générer', 'err');
+
+  const style      = $('ai-style').value;
+  const styleInstr = getAiStyleInstruction(style);
+  const endpoint   = aiGetEndpoint(apiKey);
+
+  const statusEl = $('ai-status');
+  const resultEl = $('ai-result');
+
+  // Reset UI
+  resultEl.hidden = true;
+  statusEl.hidden = false;
+  statusEl.className = 'ai-status ai-loading';
+  statusEl.innerHTML = '<div class="spinner"></div><span>Génération en cours…</span>';
+  $('btn-ai-generate').disabled = true;
+
+  try {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model:       'gpt-4o',
+        temperature: 0.35,
+        max_tokens:  1200,
+        messages: [
+          { role: 'system', content: AI_SYSTEM_PROMPT },
+          {
+            role: 'user',
+            content: `Create a Loxone SVG icon for: "${prompt}"\n\n${styleInstr}\n\nRespond ONLY with the SVG code, nothing else.`
+          }
+        ]
+      })
+    });
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      const msg = errData.error?.message || `Erreur HTTP ${res.status}`;
+      throw new Error(msg);
+    }
+
+    const data = await res.json();
+    let svgText = data.choices?.[0]?.message?.content?.trim() || '';
+
+    // Nettoyer les balises markdown éventuelles
+    svgText = svgText
+      .replace(/^```(?:svg|xml|html)?\s*/i, '')
+      .replace(/\s*```$/i, '')
+      .trim();
+
+    // Validation minimale
+    if (!svgText.includes('<svg') || !svgText.includes('</svg>')) {
+      throw new Error('SVG généré invalide — réessayez avec une description différente.');
+    }
+
+    _aiLastSvg = svgText;
+    aiShowResult(svgText);
+    statusEl.hidden = true;
+    resultEl.hidden = false;
+
+  } catch (e) {
+    statusEl.className = 'ai-status ai-error';
+    statusEl.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> ${e.message}`;
+    console.error('AI error:', e);
+  } finally {
+    $('btn-ai-generate').disabled = false;
+  }
+}
+
+function aiShowResult(svgText) {
+  const preview  = $('ai-result-preview');
+  const normalized = normalizeSvgToBlack(svgText);
+  const blob = new Blob([normalized], { type: 'image/svg+xml' });
+  const url  = URL.createObjectURL(blob);
+  const img  = document.createElement('img');
+  img.src    = url;
+  img.alt    = 'Icône générée';
+  img.onload = () => URL.revokeObjectURL(url);
+  preview.innerHTML = '';
+  preview.appendChild(img);
+}
+
+function aiUseIcon() {
+  if (!_aiLastSvg) return;
+  processSvg(_aiLastSvg, 'ai-generated');
+  $('svg-code').value = _aiLastSvg;
+  showToast('Icône IA chargée ! Choisissez une couleur et exportez.', 'ok');
+  // Switcher vers l'onglet Loxone pour voir la prévisualisation
+  $$('#source-tabs .tab').forEach(t => t.classList.remove('active'));
+  $$('.tab-content').forEach(c => c.classList.remove('active'));
+  document.querySelector('#source-tabs .tab[data-tab="code"]').classList.add('active');
+  $('tab-code').classList.add('active');
+}
+
+// initAI() est appelé dans le DOMContentLoaded principal
