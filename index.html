@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Loxone Icon Generator</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><rect width='40' height='40' rx='10' fill='%236DBE45'/><path d='M10 28V12h5v12h10v4H10zm16-16h5v16h-5V12z' fill='white'/></svg>" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header>
+    <div class="logo">
+      <svg viewBox="0 0 40 40" width="36" height="36" fill="none">
+        <rect width="40" height="40" rx="10" fill="#6DBE45"/>
+        <path d="M10 28V12h5v12h10v4H10zm16-16h5v16h-5V12z" fill="white"/>
+      </svg>
+      <span>Loxone <strong>Icon Generator</strong></span>
+    </div>
+    <p class="subtitle">Générez vos icônes PNG pour Loxone depuis un SVG (URL ou import local)</p>
+  </header>
+
+  <main>
+    <!-- ═══════════ COLONNE GAUCHE : PARAMÈTRES ═══════════ -->
+    <section class="panel panel-left">
+
+      <!-- SOURCE SVG -->
+      <div class="card">
+        <h2><span class="step">1</span> Source SVG</h2>
+
+        <div class="tabs">
+          <button class="tab active" data-tab="url">🔗 Lien URL</button>
+          <button class="tab" data-tab="file">📁 Importer SVG</button>
+          <button class="tab" data-tab="paste">✏️ Coller le code</button>
+        </div>
+
+        <!-- TAB URL -->
+        <div class="tab-content active" id="tab-url">
+          <div class="input-row">
+            <input type="text" id="svg-url" placeholder="https://cdn.example.com/icon.svg" />
+            <button class="btn btn-primary" id="btn-load-url">Charger</button>
+          </div>
+          <div class="url-suggestions">
+            <p class="hint">💡 Sources populaires :</p>
+            <div class="suggestion-pills">
+              <button class="pill" data-url="https://raw.githubusercontent.com/google/material-design-icons/master/src/action/home/materialicons/24px.svg">Material Icons</button>
+              <button class="pill" data-url="https://raw.githubusercontent.com/feathericons/feather/master/icons/home.svg">Feather</button>
+              <button class="pill" data-url="https://raw.githubusercontent.com/phosphor-icons/core/main/assets/regular/house.svg">Phosphor</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB FILE -->
+        <div class="tab-content" id="tab-file">
+          <div class="drop-zone" id="drop-zone">
+            <div class="drop-icon">📂</div>
+            <p>Glissez-déposez votre fichier SVG ici</p>
+            <p class="hint">ou</p>
+            <label class="btn btn-secondary" for="file-input">Parcourir les fichiers</label>
+            <input type="file" id="file-input" accept=".svg,image/svg+xml" hidden />
+          </div>
+        </div>
+
+        <!-- TAB PASTE -->
+        <div class="tab-content" id="tab-paste">
+          <textarea id="svg-code" placeholder="<svg xmlns=&quot;...&quot;>...</svg>" rows="8"></textarea>
+          <button class="btn btn-primary" id="btn-load-code">Appliquer</button>
+        </div>
+      </div>
+
+      <!-- COULEURS -->
+      <div class="card">
+        <h2><span class="step">2</span> Couleurs</h2>
+
+        <div class="color-mode-tabs">
+          <button class="color-tab active" data-mode="solid">Couleur unie</button>
+          <button class="color-tab" data-mode="gradient">Dégradé</button>
+          <button class="color-tab" data-mode="original">Couleurs d'origine</button>
+        </div>
+
+        <!-- COULEUR UNIE -->
+        <div class="color-panel active" id="panel-solid">
+          <div class="color-section">
+            <label>Couleur de l'icône</label>
+            <div class="color-input-row">
+              <input type="color" id="icon-color" value="#6DBE45" />
+              <input type="text" id="icon-color-hex" value="#6DBE45" maxlength="7" />
+              <input type="range" id="icon-opacity" min="0" max="100" value="100" />
+              <span id="icon-opacity-val">100%</span>
+            </div>
+          </div>
+          <div class="color-section">
+            <label>Couleur de fond</label>
+            <div class="color-input-row">
+              <input type="color" id="bg-color" value="#FFFFFF" />
+              <input type="text" id="bg-color-hex" value="#FFFFFF" maxlength="7" />
+              <input type="range" id="bg-opacity" min="0" max="100" value="0" />
+              <span id="bg-opacity-val">0%</span>
+            </div>
+          </div>
+          <div class="preset-label">Présets Loxone :</div>
+          <div class="presets">
+            <button class="preset-btn" data-color="#6DBE45" style="background:#6DBE45" title="Loxone Vert"></button>
+            <button class="preset-btn" data-color="#1A7D37" style="background:#1A7D37" title="Loxone Vert foncé"></button>
+            <button class="preset-btn" data-color="#FFFFFF" style="background:#FFFFFF;border:1px solid #ddd" title="Blanc"></button>
+            <button class="preset-btn" data-color="#222222" style="background:#222222" title="Noir"></button>
+            <button class="preset-btn" data-color="#E8873A" style="background:#E8873A" title="Orange"></button>
+            <button class="preset-btn" data-color="#E03C31" style="background:#E03C31" title="Rouge"></button>
+            <button class="preset-btn" data-color="#2196F3" style="background:#2196F3" title="Bleu"></button>
+            <button class="preset-btn" data-color="#9C27B0" style="background:#9C27B0" title="Violet"></button>
+            <button class="preset-btn" data-color="#FF9800" style="background:#FF9800" title="Ambre"></button>
+            <button class="preset-btn" data-color="#607D8B" style="background:#607D8B" title="Gris bleu"></button>
+          </div>
+        </div>
+
+        <!-- DÉGRADÉ -->
+        <div class="color-panel" id="panel-gradient">
+          <div class="color-section">
+            <label>Couleur 1</label>
+            <div class="color-input-row">
+              <input type="color" id="grad-color1" value="#6DBE45" />
+              <input type="text" id="grad-color1-hex" value="#6DBE45" maxlength="7" />
+            </div>
+          </div>
+          <div class="color-section">
+            <label>Couleur 2</label>
+            <div class="color-input-row">
+              <input type="color" id="grad-color2" value="#1A7D37" />
+              <input type="text" id="grad-color2-hex" value="#1A7D37" maxlength="7" />
+            </div>
+          </div>
+          <div class="color-section">
+            <label>Direction</label>
+            <select id="grad-direction">
+              <option value="0">⬆ Vers le haut</option>
+              <option value="90" selected>➡ Vers la droite</option>
+              <option value="180">⬇ Vers le bas</option>
+              <option value="135">↘ Diagonal</option>
+              <option value="45">↗ Diagonal inverse</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- ORIGINAL -->
+        <div class="color-panel" id="panel-original">
+          <div class="original-info">
+            <p>✅ Les couleurs d'origine du SVG seront conservées.</p>
+            <p class="hint">Idéal pour les icônes multicolores.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- OPTIONS -->
+      <div class="card">
+        <h2><span class="step">3</span> Options</h2>
+
+        <div class="option-group">
+          <label>Marge (padding)</label>
+          <div class="slider-row">
+            <input type="range" id="padding" min="0" max="40" value="10" />
+            <span id="padding-val">10%</span>
+          </div>
+        </div>
+
+        <div class="option-group">
+          <label>Arrondi du fond</label>
+          <div class="slider-row">
+            <input type="range" id="corner-radius" min="0" max="50" value="0" />
+            <span id="corner-val">0%</span>
+          </div>
+        </div>
+
+        <div class="option-group">
+          <label>Rotation</label>
+          <div class="slider-row">
+            <input type="range" id="rotation" min="0" max="360" value="0" />
+            <span id="rotation-val">0°</span>
+          </div>
+        </div>
+
+        <div class="option-group">
+          <label>Taille(s) d'export PNG</label>
+          <div class="size-grid">
+            <label class="size-check"><input type="checkbox" name="size" value="24" /> 24×24</label>
+            <label class="size-check"><input type="checkbox" name="size" value="36" /> 36×36</label>
+            <label class="size-check"><input type="checkbox" name="size" value="48" checked /> 48×48</label>
+            <label class="size-check"><input type="checkbox" name="size" value="64" checked /> 64×64</label>
+            <label class="size-check"><input type="checkbox" name="size" value="96" /> 96×96</label>
+            <label class="size-check"><input type="checkbox" name="size" value="128" checked /> 128×128</label>
+            <label class="size-check"><input type="checkbox" name="size" value="256" /> 256×256</label>
+            <label class="size-check"><input type="checkbox" name="size" value="512" /> 512×512</label>
+          </div>
+          <p class="hint">💡 Loxone recommande 48×48 et 128×128 px</p>
+        </div>
+
+        <div class="option-group">
+          <label>Nom du fichier</label>
+          <input type="text" id="filename" value="loxone-icon" placeholder="nom-du-fichier" />
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ═══════════ COLONNE DROITE : PRÉVISUALISATION ═══════════ -->
+    <section class="panel panel-right">
+      <div class="card preview-card">
+        <h2>Prévisualisation</h2>
+
+        <div class="preview-backgrounds">
+          <button class="bg-btn active" data-bg="#F5F5F5" title="Fond clair">☀️</button>
+          <button class="bg-btn" data-bg="#2C2C2C" title="Fond sombre">🌙</button>
+          <button class="bg-btn" data-bg="#6DBE45" title="Fond Loxone">🟢</button>
+          <button class="bg-btn" data-bg="repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 0 0 / 16px 16px" title="Transparent">⬜</button>
+        </div>
+
+        <div class="preview-wrapper" id="preview-wrapper">
+          <div class="preview-empty" id="preview-empty">
+            <div class="empty-icon">🖼️</div>
+            <p>Chargez un SVG pour voir l'aperçu</p>
+          </div>
+          <canvas id="preview-canvas" hidden></canvas>
+        </div>
+
+        <div class="preview-sizes" id="preview-sizes" hidden>
+          <canvas class="mini-preview" id="mini-48" width="48" height="48" title="48×48"></canvas>
+          <canvas class="mini-preview" id="mini-64" width="64" height="64" title="64×64"></canvas>
+          <canvas class="mini-preview" id="mini-128" width="128" height="128" title="128×128"></canvas>
+        </div>
+
+        <div class="preview-info" id="preview-info" hidden>
+          <span id="info-size"></span>
+          <span id="info-format">PNG</span>
+        </div>
+      </div>
+
+      <!-- EXPORT -->
+      <div class="card export-card">
+        <h2>Export</h2>
+
+        <div class="export-count" id="export-count">
+          <span id="selected-sizes-label">3 taille(s) sélectionnée(s)</span>
+        </div>
+
+        <div class="export-actions">
+          <button class="btn btn-export" id="btn-export-single">
+            ⬇ Télécharger (taille principale)
+          </button>
+          <button class="btn btn-export-all" id="btn-export-all">
+            📦 Télécharger toutes les tailles (ZIP)
+          </button>
+        </div>
+
+        <div class="export-options">
+          <label class="toggle-label">
+            <input type="checkbox" id="opt-loxone-names" checked />
+            Noms de fichiers au format Loxone
+          </label>
+          <label class="toggle-label">
+            <input type="checkbox" id="opt-include-svg" />
+            Inclure le SVG colorisé dans le ZIP
+          </label>
+        </div>
+      </div>
+
+      <!-- HISTORIQUE -->
+      <div class="card">
+        <h2>Historique <span class="badge" id="history-count">0</span></h2>
+        <div class="history-list" id="history-list">
+          <p class="hint" id="history-empty">Aucune icône générée pour le moment.</p>
+        </div>
+        <button class="btn btn-danger-sm" id="btn-clear-history" hidden>🗑 Vider l'historique</button>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- TOAST NOTIFICATION -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Canvas caché pour le rendu -->
+  <canvas id="render-canvas" hidden></canvas>
+
+  <script src="jszip.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
