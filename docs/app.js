@@ -707,7 +707,7 @@ function initSliders() {
 
 function updateSizeLabel() {
   const n = [...$$('input[name="size"]:checked')].length;
-  $('sizes-label').textContent = `${n} taille(s) sélectionnée(s)`;
+  $('sizes-label').textContent = n === 0 ? 'Aucune taille sélectionnée' : `${n} taille${n > 1 ? 's' : ''} sélectionnée${n > 1 ? 's' : ''}`;
 }
 
 // ════════════════════════════════════════════
@@ -913,7 +913,7 @@ function initExport() {
 async function exportSingle() {
   if (!state.svgRaw) return showToast('Chargez une icône d\'abord', 'err');
   const sizes = getSelectedSizes();
-  if (!sizes.length) return showToast('Sélectionnez au moins une taille', 'err');
+  if (!sizes.length) return showToast('Veuillez sélectionner au moins une taille PNG', 'err');
   const size = sizes[sizes.length - 1];
   const canvas = $('render-canvas');
   await renderToCanvas(canvas, size, false); // false = couleur choisie pour l'export
@@ -927,7 +927,7 @@ async function exportZip() {
   if (!state.svgRaw) return showToast('Chargez une icône d\'abord', 'err');
   if (typeof JSZip === 'undefined') return showToast('JSZip non disponible', 'err');
   const sizes = getSelectedSizes();
-  if (!sizes.length) return showToast('Sélectionnez au moins une taille', 'err');
+  if (!sizes.length) return showToast('Veuillez sélectionner au moins une taille PNG', 'err');
 
   showToast('Génération ZIP…', 'info');
   const zip = new JSZip();
