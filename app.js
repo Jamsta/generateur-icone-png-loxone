@@ -56,8 +56,6 @@ const state = {
   svgColored: null,
   iconColor: '#85FF66',  // Vert Loxone par défaut
   iconOpacity: 1,
-  bgColor: '#FFFFFF',
-  bgOpacity: 0,
   padding: 0,
   cornerRadius: 0,
   rotation: 0,
@@ -557,16 +555,9 @@ function initColorInputs() {
     syncPaletteActive(val);
     applyAndRender();
   });
-  syncColor($('bg-color'), $('bg-color-hex'), val => { state.bgColor = val; applyAndRender(); });
-
   $('icon-opacity').addEventListener('input', e => {
     state.iconOpacity = e.target.value / 100;
     $('icon-opacity-val').textContent = e.target.value + '%';
-    applyAndRender();
-  });
-  $('bg-opacity').addEventListener('input', e => {
-    state.bgOpacity = e.target.value / 100;
-    $('bg-opacity-val').textContent = e.target.value + '%';
     applyAndRender();
   });
 }
@@ -629,48 +620,36 @@ function coloriseSvg(svgString, color, opacity) {
   const svgEl = doc.querySelector('svg');
   if (!svgEl) return svgString;
 
-  // ── Traitement de la balise <svg> racine ──
+  // ── Racine SVG ──
+  // Après normalizeSvgToBlack, la racine a fill="black" ou fill="none"
+  // On remplace tout ce qui n'est pas "none" par la couleur choisie
   const rootFill = svgEl.getAttribute('fill');
-  // Si le SVG racine a fill="none", on le garde (pattern typique Loxone)
-  // Si fill est absent ou black/currentColor, on met la couleur
-  if (!rootFill || rootFill === 'none') {
-    // On ne touche pas à fill="none" sur la racine
-    // mais on met fill sur la racine pour hériter sur les paths sans fill
-    if (!rootFill) svgEl.setAttribute('fill', color);
-  } else if (rootFill !== 'none') {
+  if (rootFill && rootFill !== 'none') {
+    svgEl.setAttribute('fill', color);
+  } else if (!rootFill) {
+    // Pas d'attribut fill : on le pose pour que les paths héritent
     svgEl.setAttribute('fill', color);
   }
+  // fill="none" sur la racine → on le laisse (cas SVG stroke-only)
 
-  // ── Traitement de tous les éléments enfants ──
+  // ── Tous les éléments enfants ──
   svgEl.querySelectorAll('*').forEach(el => {
-    const tag = el.tagName.toLowerCase();
-    // Ne pas toucher aux éléments de définition/structure
+    const tag = el.tagName.toLowerCase().replace(/.*:/, '');
     if (tag === 'defs' || tag === 'clippath' || tag === 'lineargradient' ||
         tag === 'radialgradient' || tag === 'pattern' || tag === 'mask') return;
 
     const fill = el.getAttribute('fill');
     const style = el.getAttribute('style') || '';
 
-    // Colorer uniquement si fill est défini et ≠ "none"
-    // → préserve les trous/découpes (fill="none")
+    // Colorer tout fill qui n'est pas "none"
+    // fill="none" = trou/découpe → préservé
     if (fill !== null && fill !== 'none') {
-      // fill="black", fill="white", fill="currentColor", fill="#000", etc.
-      // → on remplace par la couleur choisie
-      if (fill === 'white' || fill === '#fff' || fill === '#ffffff' || fill === '#FFF' || fill === '#FFFFFF') {
-        // Les fills blancs dans les icônes Loxone sont des trous internes
-        // → on les garde blancs (ou on les rend légèrement transparents)
-        // NE PAS COLORER — c'est une découpe visuelle
-        // (les 7 icônes avec fill=white ont des trous internes)
-      } else {
-        el.setAttribute('fill', color);
-      }
+      el.setAttribute('fill', color);
     }
 
-    // Style inline avec fill
+    // Style inline : remplacer fill:xxx sauf fill:none
     if (style) {
-      let newStyle = style;
-      // Remplacer fill: xxx sauf fill: none
-      newStyle = newStyle.replace(/fill\s*:\s*(?!none\b)([^;]+)/gi, `fill:${color}`);
+      const newStyle = style.replace(/fill\s*:\s*(?!none\b)([^;]+)/gi, `fill:${color}`);
       if (newStyle !== style) el.setAttribute('style', newStyle);
     }
   });
@@ -727,22 +706,6 @@ async function renderToCanvas(canvas, size, preview = false) {
   canvas.width = size;
   canvas.height = size;
   ctx.clearRect(0, 0, size, size);
-
-  // Fond
-  if (state.bgOpacity > 0) {
-    ctx.save();
-    ctx.globalAlpha = state.bgOpacity;
-    if (state.cornerRadius > 0) {
-      const r = (state.cornerRadius / 100) * (size / 2);
-      roundRect(ctx, 0, 0, size, size, r);
-      ctx.fillStyle = state.bgColor;
-      ctx.fill();
-    } else {
-      ctx.fillStyle = state.bgColor;
-      ctx.fillRect(0, 0, size, size);
-    }
-    ctx.restore();
-  }
 
   // Choisir le SVG selon le mode
   const svg = preview
