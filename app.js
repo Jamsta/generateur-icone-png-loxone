@@ -1063,42 +1063,44 @@ function showToast(msg, type = 'ok') {
 }
 
 // ════════════════════════════════════════════
-// ONGLET IA — GÉNÉRATION SVG VIA GPT-4o
-// Clé API saisie par l'utilisateur, stockée localStorage
-// Compatible : OpenAI (api.openai.com) et Genspark (genspark.ai/api/llm_proxy/v1)
+// ONGLET IA — GÉNÉRATION SVG VIA GOOGLE GEMINI
+// API : Google AI Studio (aistudio.google.com)
+// Modèle : gemini-2.0-flash  (gratuit, ~1500 req/jour)
+// Clé stockée dans localStorage — jamais envoyée ailleurs
 // ════════════════════════════════════════════
 
-const AI_OPENAI_URL   = 'https://api.openai.com/v1/chat/completions';
-const AI_GENSPARK_URL = 'https://www.genspark.ai/api/llm_proxy/v1/chat/completions';
+const AI_GEMINI_MODEL = 'gemini-2.0-flash';
+const AI_GEMINI_URL   = key =>
+  `https://generativelanguage.googleapis.com/v1beta/models/${AI_GEMINI_MODEL}:generateContent?key=${key}`;
 
-// Prompt système : génère des SVG fill conformes Loxone
+// Prompt optimisé pour Gemini — génère des SVG fill conformes Loxone
 const AI_SYSTEM_PROMPT = `You are an SVG icon designer specialized in Loxone Config icons.
 
 STRICT RULES — follow exactly:
-1. Output ONLY raw SVG code. No markdown, no \`\`\`, no explanation, no comments.
+1. Output ONLY raw SVG code. No markdown, no backticks, no explanation, no comments.
 2. Must have viewBox="0 0 24 24" and xmlns="http://www.w3.org/2000/svg".
-3. FILL ONLY style: use fill="black" on all shapes. NO stroke attributes at all.
-4. fill="none" ONLY for cutouts/holes inside shapes (e.g., ring interior).
-5. Use fill-rule="evenodd" for shapes with holes.
+3. FILL ONLY style: use fill="black" on all shapes. NO stroke attributes whatsoever.
+4. fill="none" ONLY for cutouts/holes inside shapes (e.g., ring interior, window in a house).
+5. Use fill-rule="evenodd" for shapes that contain holes.
 6. Simple, readable silhouette at 24×24px and 48×48px.
 7. No text, no gradient, no filter, no mask, no complex clipPath.
-8. Use simple elements: path, circle, rect, polygon.
-9. Start directly with <svg and end with </svg>.
-10. The icon must look like an official Loxone Config icon: clean, minimal, professional.`;
+8. Use simple elements: path, circle, rect, polygon, ellipse.
+9. Start directly with <svg and end with </svg>. Nothing before or after.
+10. Look like an official Loxone Config icon: clean, minimal, professional.`;
 
 function getAiStyleInstruction(style) {
   switch (style) {
     case 'outline':
-      return 'Use fill-rule="evenodd" to create hollow/outline shapes. The icon should appear as an outline silhouette, not a solid shape. Create the outer shape and subtract the inner area using compound paths.';
+      return 'Style: hollow/outline silhouette. Use fill-rule="evenodd" with compound paths to subtract the inner area from the outer shape, creating an outline effect with fill only (no stroke).';
     case 'rounded':
-      return 'Use rounded corners and soft organic shapes. Prefer rounded rectangles and smooth bezier curves. The icon should feel modern and friendly.';
+      return 'Style: rounded modern shapes. Use smooth bezier curves, rounded rectangles (rx/ry attributes), and soft organic forms. Keep it clean and friendly.';
     default:
-      return 'Use solid filled shapes (fill="black"). The icon should be a clean, solid silhouette with no outlines or strokes.';
+      return 'Style: solid filled silhouette. All shapes use fill="black". Clean solid icon, no holes unless necessary for clarity.';
   }
 }
 
-const AI_LS_KEY = 'lox_ai_apikey';
-let _aiLastSvg = null;
+const AI_LS_KEY = 'lox_gemini_apikey';
+let _aiLastSvg  = null;
 
 function initAI() {
   // Restaurer la clé sauvegardée
@@ -1108,6 +1110,7 @@ function initAI() {
     aiShowKeyStatus(true);
   }
 
+  // Sauvegarder la clé
   $('btn-ai-save-key').addEventListener('click', () => {
     const key = $('ai-api-key').value.trim();
     if (!key) {
@@ -1118,11 +1121,11 @@ function initAI() {
     }
     localStorage.setItem(AI_LS_KEY, key);
     aiShowKeyStatus(true);
-    showToast('Clé API sauvegardée ✓', 'ok');
+    showToast('Clé Gemini sauvegardée ✓', 'ok');
   });
 
+  // Générer au clic ou Ctrl+Entrée
   $('btn-ai-generate').addEventListener('click', aiGenerate);
-
   $('ai-prompt').addEventListener('keydown', e => {
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) aiGenerate();
   });
@@ -1132,28 +1135,17 @@ function initAI() {
 }
 
 function aiShowKeyStatus(hasKey) {
-  const block = $('ai-key-block');
-  if (hasKey) {
-    block.classList.add('ai-key-saved');
-  } else {
-    block.classList.remove('ai-key-saved');
-  }
+  $('ai-key-block').classList.toggle('ai-key-saved', hasKey);
 }
 
 function aiGetKey() {
   return $('ai-api-key').value.trim() || localStorage.getItem(AI_LS_KEY) || '';
 }
 
-function aiGetEndpoint(key) {
-  // Genspark keys start differently from OpenAI sk-
-  if (key.startsWith('sk-')) return AI_OPENAI_URL;
-  return AI_GENSPARK_URL;
-}
-
 async function aiGenerate() {
   const apiKey = aiGetKey();
   if (!apiKey) {
-    showToast('Entrez votre clé API d\'abord', 'err');
+    showToast('Entre ta clé Gemini d\'abord', 'err');
     $('ai-api-key').focus();
     return;
   }
@@ -1163,7 +1155,6 @@ async function aiGenerate() {
 
   const style      = $('ai-style').value;
   const styleInstr = getAiStyleInstruction(style);
-  const endpoint   = aiGetEndpoint(apiKey);
 
   const statusEl = $('ai-status');
   const resultEl = $('ai-result');
@@ -1172,48 +1163,61 @@ async function aiGenerate() {
   resultEl.hidden = true;
   statusEl.hidden = false;
   statusEl.className = 'ai-status ai-loading';
-  statusEl.innerHTML = '<div class="spinner"></div><span>Génération en cours…</span>';
+  statusEl.innerHTML = '<div class="spinner"></div><span>Génération Gemini en cours…</span>';
   $('btn-ai-generate').disabled = true;
 
   try {
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type':  'application/json',
-        'Authorization': `Bearer ${apiKey}`,
+    // Format API Gemini (différent d'OpenAI)
+    const body = {
+      system_instruction: {
+        parts: [{ text: AI_SYSTEM_PROMPT }]
       },
-      body: JSON.stringify({
-        model:       'gpt-4o',
-        temperature: 0.35,
-        max_tokens:  1200,
-        messages: [
-          { role: 'system', content: AI_SYSTEM_PROMPT },
-          {
-            role: 'user',
-            content: `Create a Loxone SVG icon for: "${prompt}"\n\n${styleInstr}\n\nRespond ONLY with the SVG code, nothing else.`
-          }
-        ]
-      })
+      contents: [{
+        parts: [{
+          text: `Create a Loxone SVG icon for: "${prompt}"\n\n${styleInstr}\n\nRespond ONLY with the SVG code. Nothing else.`
+        }]
+      }],
+      generationConfig: {
+        temperature:     0.3,
+        maxOutputTokens: 1200,
+        topP:            0.8,
+      }
+    };
+
+    const res = await fetch(AI_GEMINI_URL(apiKey), {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(body)
     });
 
     if (!res.ok) {
       const errData = await res.json().catch(() => ({}));
       const msg = errData.error?.message || `Erreur HTTP ${res.status}`;
+      // Message d'erreur clair pour clé invalide
+      if (res.status === 400 || res.status === 403) {
+        throw new Error('Clé API invalide ou expirée. Vérifie ta clé sur aistudio.google.com');
+      }
       throw new Error(msg);
     }
 
     const data = await res.json();
-    let svgText = data.choices?.[0]?.message?.content?.trim() || '';
 
-    // Nettoyer les balises markdown éventuelles
+    // Extraire le texte de la réponse Gemini
+    let svgText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+
+    // Nettoyer les éventuels blocs markdown
     svgText = svgText
-      .replace(/^```(?:svg|xml|html)?\s*/i, '')
-      .replace(/\s*```$/i, '')
+      .replace(/^```(?:svg|xml|html)?\s*/im, '')
+      .replace(/\s*```\s*$/im, '')
       .trim();
 
-    // Validation minimale
+    // Extraire uniquement le SVG si du texte parasite est présent
+    const svgMatch = svgText.match(/<svg[\s\S]*<\/svg>/i);
+    if (svgMatch) svgText = svgMatch[0];
+
+    // Validation
     if (!svgText.includes('<svg') || !svgText.includes('</svg>')) {
-      throw new Error('SVG généré invalide — réessayez avec une description différente.');
+      throw new Error('SVG généré invalide — réessaie avec une description plus simple.');
     }
 
     _aiLastSvg = svgText;
@@ -1224,20 +1228,20 @@ async function aiGenerate() {
   } catch (e) {
     statusEl.className = 'ai-status ai-error';
     statusEl.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> ${e.message}`;
-    console.error('AI error:', e);
+    console.error('Gemini AI error:', e);
   } finally {
     $('btn-ai-generate').disabled = false;
   }
 }
 
 function aiShowResult(svgText) {
-  const preview  = $('ai-result-preview');
+  const preview    = $('ai-result-preview');
   const normalized = normalizeSvgToBlack(svgText);
   const blob = new Blob([normalized], { type: 'image/svg+xml' });
   const url  = URL.createObjectURL(blob);
   const img  = document.createElement('img');
   img.src    = url;
-  img.alt    = 'Icône générée';
+  img.alt    = 'Icône générée par Gemini';
   img.onload = () => URL.revokeObjectURL(url);
   preview.innerHTML = '';
   preview.appendChild(img);
@@ -1247,8 +1251,8 @@ function aiUseIcon() {
   if (!_aiLastSvg) return;
   processSvg(_aiLastSvg, 'ai-generated');
   $('svg-code').value = _aiLastSvg;
-  showToast('Icône IA chargée ! Choisissez une couleur et exportez.', 'ok');
-  // Switcher vers l'onglet Loxone pour voir la prévisualisation
+  showToast('Icône Gemini chargée ! Choisis une couleur et exporte.', 'ok');
+  // Basculer vers l'onglet Code pour montrer le SVG brut
   $$('#source-tabs .tab').forEach(t => t.classList.remove('active'));
   $$('.tab-content').forEach(c => c.classList.remove('active'));
   document.querySelector('#source-tabs .tab[data-tab="code"]').classList.add('active');

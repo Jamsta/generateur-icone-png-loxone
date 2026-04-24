@@ -150,22 +150,28 @@
           <div class="ai-header">
             <div class="ai-badge">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a1 1 0 011 1v2.07A7.002 7.002 0 0118.93 11H21a1 1 0 010 2h-2.07A7.002 7.002 0 0113 18.93V21a1 1 0 01-2 0v-2.07A7.002 7.002 0 015.07 13H3a1 1 0 010-2h2.07A7.002 7.002 0 0111 5.07V3a1 1 0 011-1zm0 5a5 5 0 100 10A5 5 0 0012 7zm0 2a3 3 0 110 6 3 3 0 010-6z"/></svg>
-              Génération IA
+              Gemini AI — Gratuit
             </div>
-            <span class="ai-desc">Crée une icône SVG fill conforme aux standards Loxone via GPT-4o</span>
+            <span class="ai-desc">Génère une icône SVG fill conforme Loxone via Google Gemini 2.0 Flash</span>
           </div>
 
-          <!-- Clé API -->
+          <!-- Clé API Gemini -->
           <div class="ai-key-block" id="ai-key-block">
             <div class="ai-key-label">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-              Clé API OpenAI / Genspark
+              Clé API Google Gemini
             </div>
             <div class="ai-key-row">
-              <input type="password" id="ai-api-key" placeholder="sk-… ou votre clé Genspark" autocomplete="off" />
+              <input type="password" id="ai-api-key" placeholder="AIza…" autocomplete="off" />
               <button class="btn btn-ghost ai-key-save" id="btn-ai-save-key">Sauver</button>
             </div>
-            <p class="hint mt4">Stockée <strong>uniquement dans votre navigateur</strong>. Non transmise ailleurs.</p>
+            <div class="ai-key-help">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
+              Gratuit sur
+              <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com</a>
+              — compte Google suffit
+            </div>
+            <p class="hint">Stockée <strong>uniquement dans ton navigateur</strong>, jamais envoyée ailleurs.</p>
           </div>
 
           <!-- Prompt -->
@@ -215,7 +221,8 @@
           <!-- Conseils -->
           <div class="ai-tips">
             <p class="hint">💡 <strong>Conseils :</strong> Décris une silhouette simple — les icônes Loxone sont 24×24px fill.
-            <br>Ex : <em>"cadenas ouvert"</em>, <em>"soleil avec nuage"</em>, <em>"clé avec anneau"</em>.</p>
+            <br>Ex : <em>"cadenas ouvert"</em>, <em>"soleil avec nuage"</em>, <em>"ventilateur"</em>, <em>"thermomètre"</em>.
+            <br><br>⌨️ <strong>Ctrl+Entrée</strong> pour générer rapidement.</p>
           </div>
 
         </div>

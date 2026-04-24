@@ -827,6 +827,14 @@ input[type="color"]:hover { border-color: var(--border-hover); }
   letter-spacing: .07em; color: var(--text3);
 }
 .ai-key-saved .ai-key-label { color: var(--lox); }
+.ai-key-help {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 10.5px; color: var(--text3);
+}
+.ai-key-help a {
+  color: #4285f4; text-decoration: none; font-weight: 600;
+}
+.ai-key-help a:hover { text-decoration: underline; }
 .ai-key-row { display: flex; gap: 6px; }
 .ai-key-row input {
   flex: 1; font-size: 11px !important; font-family: monospace !important;
