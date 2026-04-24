@@ -638,18 +638,24 @@ function coloriseSvg(svgString, color, opacity) {
     if (tag === 'defs' || tag === 'clippath' || tag === 'lineargradient' ||
         tag === 'radialgradient' || tag === 'pattern' || tag === 'mask') return;
 
-    const fill = el.getAttribute('fill');
-    const style = el.getAttribute('style') || '';
+    const fill   = el.getAttribute('fill');
+    const stroke = el.getAttribute('stroke');
+    const style  = el.getAttribute('style') || '';
 
-    // Colorer tout fill qui n'est pas "none"
-    // fill="none" = trou/découpe → préservé
+    // Colorer tout fill qui n'est pas "none" (fill="none" = découpe → préservé)
     if (fill !== null && fill !== 'none') {
       el.setAttribute('fill', color);
     }
 
-    // Style inline : remplacer fill:xxx sauf fill:none
+    // Colorer tout stroke défini (icônes stroke-only type Iconoir, Tabler…)
+    if (stroke !== null && stroke !== 'none') {
+      el.setAttribute('stroke', color);
+    }
+
+    // Style inline : remplacer fill et stroke (sauf none)
     if (style) {
-      const newStyle = style.replace(/fill\s*:\s*(?!none\b)([^;]+)/gi, `fill:${color}`);
+      let newStyle = style.replace(/fill\s*:\s*(?!none\b)([^;]+)/gi, `fill:${color}`);
+      newStyle = newStyle.replace(/stroke\s*:\s*(?!none\b)([^;]+)/gi, `stroke:${color}`);
       if (newStyle !== style) el.setAttribute('style', newStyle);
     }
   });
