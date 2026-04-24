@@ -190,14 +190,10 @@ header {
    SEARCH
 ══════════════════════════════════════════ */
 .search-wrap { position: relative; margin-bottom: 10px; }
-.search-wrap .icon-search {
-  position: absolute; left: 9px; top: 50%; transform: translateY(-50%);
-  color: var(--text3); pointer-events: none;
-  display: flex; align-items: center;
-}
+.search-wrap .icon-search { display: none; }
 .search-wrap input {
   width: 100%;
-  padding: 7px 36px 7px 30px;
+  padding: 7px 40px 7px 10px;
   background: var(--surface2);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
